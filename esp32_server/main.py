@@ -2,6 +2,7 @@ import uasyncio as asyncio
 import machine
 from machine import UART, Pin
 import json
+import telemetry
 
 # Configuración de pines
 LED = Pin(2, Pin.OUT)
@@ -21,11 +22,20 @@ def send_uart_command(cmd):
     try:
         uart.write(cmd)
         print("Enviado:", cmd)
+        # Registrar telemetría de envío UART
+        try:
+            telemetry.log_event('uart_send', {'cmd': cmd})
+        except Exception:
+            pass
         # Parpadear LED de estado
         LED.value(1)
         # Utilizamos un pequeño timer no asíncrono para el LED, o simplemente lo dejamos encendido un momento
     except Exception as e:
         print("Error UART:", e)
+        try:
+            telemetry.log_event('error', {'where': 'send_uart_command', 'error': str(e)})
+        except Exception:
+            pass
 
 # Handler de las peticiones HTTP
 async def handle_client(reader, writer):
@@ -37,6 +47,11 @@ async def handle_client(reader, writer):
         
         request_line = request_line.decode('utf-8').strip()
         print("Petición recibida:", request_line)
+        # Registrar telemetría de petición HTTP
+        try:
+            telemetry.log_event('http_request', {'request_line': request_line})
+        except Exception:
+            pass
         
         # Ignorar headers restantes para simplificar
         while True:
@@ -63,10 +78,24 @@ async def handle_client(reader, writer):
             cmd = request_line.split('cmd=')[1].split(' ')[0]
             if cmd in ['F', 'B', 'U', 'D', 'L', 'R', 'S']:
                 send_uart_command(cmd)
+                try:
+                    telemetry.log_event('command_received', {'cmd': cmd})
+                except Exception:
+                    pass
                 response = 'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nConnection: close\r\n\r\n{"status":"ok"}'
             else:
                 response = 'HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n'
             
+            writer.write(response.encode('utf-8'))
+            await writer.drain()
+
+        elif request_line.startswith('GET /api/telemetry'):
+            # Devolver logs de telemetría como texto plano
+            try:
+                logs = telemetry.read_all()
+                response = 'HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\n' + logs
+            except Exception as e:
+                response = 'HTTP/1.1 500 Internal Server Error\r\nConnection: close\r\n\r\n'
             writer.write(response.encode('utf-8'))
             await writer.drain()
             
@@ -77,6 +106,10 @@ async def handle_client(reader, writer):
             
     except Exception as e:
         print("Error handle_client:", e)
+        try:
+            telemetry.log_event('error', {'where': 'handle_client', 'error': str(e)})
+        except Exception:
+            pass
     finally:
         writer.close()
         await writer.wait_closed()

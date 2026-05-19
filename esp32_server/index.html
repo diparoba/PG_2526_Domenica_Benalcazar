@@ -318,6 +318,8 @@
         
         <!-- Botón Stop manual de emergencia -->
         <div class="btn btn-stop" data-cmd="S">PARADA DE EMERGENCIA</div>
+        <!-- Botón para ver telemetría -->
+        <div class="btn" id="telemetry-btn" style="margin-top:10px; max-width:260px; background: rgba(11, 22, 30, 0.6);">VER TELEMETRÍA</div>
     </div>
 
     <script>
@@ -380,6 +382,61 @@
                 activeCommand = null;
                 sendCommand('S');
             }
+        });
+    </script>
+
+    <!-- Modal de Telemetría -->
+    <div id="telemetry-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:#071018; color:var(--text); width:90%; max-width:900px; max-height:80%; overflow:auto; border-radius:12px; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,0.7); border:1px solid rgba(187,237,36,0.08);">
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+                <h3 style="margin:0; font-family:'MedievalSharp', cursive; color:var(--primary);">Telemetría</h3>
+                <button id="telemetry-close" style="background:transparent; border:1px solid rgba(255,255,255,0.06); color:var(--text); padding:6px 10px; border-radius:8px;">Cerrar</button>
+            </div>
+            <div id="telemetry-content" style="margin-top:12px; font-family:monospace; font-size:12px; color:var(--text);">
+                <table id="telemetry-table" style="width:100%; border-collapse:collapse;">
+                    <thead><tr style="text-align:left; color:var(--text-muted);"><th style="padding:6px 8px; width:140px;">Timestamp</th><th style="padding:6px 8px;">Evento</th><th style="padding:6px 8px;">Detalles</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Telemetría: mostrar modal y cargar logs
+        document.getElementById('telemetry-btn').addEventListener('click', async () => {
+            const modal = document.getElementById('telemetry-modal');
+            const tbody = document.querySelector('#telemetry-table tbody');
+            tbody.innerHTML = '<tr><td colspan="3" style="padding:12px; color:var(--text-muted)">Cargando...</td></tr>';
+            modal.style.display = 'flex';
+            try {
+                const res = await fetch('/api/telemetry');
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const text = await res.text();
+                const lines = text.split('\n').filter(l => l.trim().length > 0);
+                tbody.innerHTML = '';
+                for (let i = lines.length - 1; i >= 0; i--) {
+                    try {
+                        const obj = JSON.parse(lines[i]);
+                        const ts = obj.ts || '';
+                        const ev = obj.event || '';
+                        const det = obj.details ? JSON.stringify(obj.details) : '';
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `<td style="padding:6px 8px; vertical-align:top;">${ts}</td><td style="padding:6px 8px; vertical-align:top;">${ev}</td><td style="padding:6px 8px; vertical-align:top;">${det}</td>`;
+                        tbody.appendChild(tr);
+                    } catch (e) {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `<td colspan="3" style="padding:6px 8px; color:var(--text-muted)">${lines[i]}</td>`;
+                        tbody.appendChild(tr);
+                    }
+                }
+                if (lines.length === 0) tbody.innerHTML = '<tr><td colspan="3" style="padding:12px; color:var(--text-muted)">No hay eventos.</td></tr>';
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="3" style="padding:12px; color:var(--danger)">Error cargando telemetría: ${err}</td></tr>`;
+            }
+        });
+
+        document.getElementById('telemetry-close').addEventListener('click', () => {
+            document.getElementById('telemetry-modal').style.display = 'none';
         });
     </script>
 </body>
