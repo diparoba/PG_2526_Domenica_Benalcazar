@@ -199,9 +199,7 @@
         // Prevenir el menú contextual en móvil
         document.addEventListener('contextmenu', event => event.preventDefault());
 
-        let isCommandActive = false;
         let activeCommand = null;
-        let commandInterval = null;
 
         // Función para enviar comando
         const sendCommand = (cmd) => {
@@ -223,11 +221,6 @@
                 if (activeCommand !== cmd) {
                     activeCommand = cmd;
                     sendCommand(cmd);
-                    // Opcional: Enviar comando periódicamente si se mantiene presionado para resetear el timeout
-                    if (commandInterval) clearInterval(commandInterval);
-                    commandInterval = setInterval(() => {
-                        if (activeCommand) sendCommand(activeCommand);
-                    }, 300); // Envia cada 300ms
                 }
             }
         };
@@ -239,10 +232,6 @@
             
             if (activeCommand !== null) {
                 activeCommand = null;
-                if (commandInterval) {
-                    clearInterval(commandInterval);
-                    commandInterval = null;
-                }
                 sendCommand('S'); // Stop
             }
         };
@@ -264,7 +253,6 @@
         document.addEventListener('mouseup', () => {
             if (activeCommand !== null) {
                 activeCommand = null;
-                if (commandInterval) clearInterval(commandInterval);
                 sendCommand('S');
             }
         });
