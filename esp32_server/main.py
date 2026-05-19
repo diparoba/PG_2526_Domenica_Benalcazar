@@ -48,7 +48,8 @@ async def handle_client(reader, writer):
         if request_line.startswith('GET / HTTP'):
             html = get_html()
             response = 'HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n' + html
-            await writer.awrite(response.encode('utf-8'))
+            writer.write(response.encode('utf-8'))
+            await writer.drain()
             
         elif request_line.startswith('POST /api/command'):
             # En una petición POST básica sin Content-Length riguroso, 
@@ -66,16 +67,19 @@ async def handle_client(reader, writer):
             else:
                 response = 'HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n'
             
-            await writer.awrite(response.encode('utf-8'))
+            writer.write(response.encode('utf-8'))
+            await writer.drain()
             
         else:
             response = 'HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n'
-            await writer.awrite(response.encode('utf-8'))
+            writer.write(response.encode('utf-8'))
+            await writer.drain()
             
     except Exception as e:
         print("Error handle_client:", e)
     finally:
-        await writer.aclose()
+        writer.close()
+        await writer.wait_closed()
         LED.value(0)
 
 # Corutina principal
