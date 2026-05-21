@@ -13,189 +13,117 @@
             --glass-border: rgba(187, 237, 36, 0.2);
             --primary: #bbed24; /* Ojos de Chimuelo */
             --primary-glow: rgba(187, 237, 36, 0.5);
-            --danger: #e11d48; /* Cola roja */
+            --danger: #e11d48; /* Cola roja de emergencia */
             --danger-glow: rgba(225, 29, 72, 0.6);
             --text: #f8fafc;
             --text-muted: #94a3b8;
         }
 
         body {
-            margin: 0;
-            padding: 0;
+            margin: 0; padding: 0;
             font-family: 'Outfit', sans-serif;
             background: var(--bg-gradient);
             background-attachment: fixed;
             color: var(--text);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            overflow: hidden;
-            touch-action: none;
-            position: relative;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            min-height: 100vh; overflow: hidden;
+            touch-action: none; position: relative;
         }
 
-        /* Ojos de dragón brillando en el fondo */
         body::before, body::after {
-            content: '';
-            position: absolute;
-            width: 250px;
-            height: 150px;
-            border-radius: 50%;
-            filter: blur(80px);
-            z-index: -1;
-            background: rgba(187, 237, 36, 0.18);
-            top: 10%;
+            content: ''; position: absolute;
+            width: 250px; height: 150px; border-radius: 50%;
+            filter: blur(80px); z-index: -1;
+            background: rgba(187, 237, 36, 0.18); top: 10%;
         }
-        body::before {
-            left: 15%;
-            transform: rotate(-15deg);
-        }
-        body::after {
-            right: 15%;
-            transform: rotate(15deg);
-        }
+        body::before { left: 15%; transform: rotate(-15deg); }
+        body::after { right: 15%; transform: rotate(15deg); }
 
         .title {
-            margin-top: 30px;
-            font-family: 'MedievalSharp', cursive;
-            font-size: 38px;
-            font-weight: 700;
-            letter-spacing: 4px;
-            text-align: center;
-            text-transform: uppercase;
-            color: #ffffff;
+            margin-top: 30px; font-family: 'MedievalSharp', cursive;
+            font-size: 38px; font-weight: 700; letter-spacing: 4px;
+            text-align: center; text-transform: uppercase; color: #ffffff;
             text-shadow: 0 0 20px rgba(187, 237, 36, 0.4), 0 5px 15px rgba(0,0,0,0.9);
             border-bottom: 2px solid rgba(187, 237, 36, 0.4);
-            padding-bottom: 10px;
-            width: 80%;
-            max-width: 400px;
+            padding-bottom: 10px; width: 80%; max-width: 400px;
         }
 
         .container {
-            display: flex;
-            flex-direction: column;
-            gap: 30px;
-            padding: 20px;
-            width: 100%;
-            max-width: 700px;
-            box-sizing: border-box;
-            z-index: 1;
-            align-items: center;
+            display: flex; flex-direction: column; gap: 20px;
+            padding: 20px; width: 100%; max-width: 700px;
+            box-sizing: border-box; z-index: 1; align-items: center;
         }
 
         .controls-wrapper {
-            display: flex;
-            flex-direction: row;
-            justify-content: center;
-            align-items: stretch;
-            gap: 20px;
-            width: 100%;
+            display: flex; flex-direction: row;
+            justify-content: center; align-items: stretch;
+            gap: 20px; width: 100%;
         }
 
         .control-group {
             background: var(--glass-bg);
-            border-radius: 24px;
-            padding: 20px;
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--glass-border);
             box-shadow: 0 20px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            transition: transform 0.3s ease;
-            flex: 1;
+            border-radius: 24px; padding: 25px;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            transition: transform 0.3s ease; flex: 1;
         }
         
-        .control-group:hover {
-            transform: translateY(-2px);
-        }
+        .control-group:hover { transform: translateY(-2px); }
 
         .group-title {
-            margin: 0 0 15px 0;
-            font-family: 'MedievalSharp', cursive;
-            font-size: 14px;
-            color: var(--primary);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            text-shadow: 0 0 8px rgba(187, 237, 36, 0.3);
-            text-align: center;
+            margin: 0 0 15px 0; font-family: 'MedievalSharp', cursive;
+            font-size: 14px; color: var(--primary);
+            text-transform: uppercase; letter-spacing: 2px;
+            display: flex; align-items: center; gap: 5px;
+            text-shadow: 0 0 8px rgba(187, 237, 36, 0.3); text-align: center;
         }
 
         .group-title::before, .group-title::after {
-            content: '';
-            height: 1px;
-            width: 15px;
-            background: var(--glass-border);
+            content: ''; height: 1px; width: 15px; background: var(--glass-border);
         }
 
         .d-pad {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(3, 1fr);
-            gap: 12px;
-            width: 100%;
-            max-width: 250px;
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr); gap: 12px;
+            width: 100%; max-width: 250px;
         }
 
         .btn {
             background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--glass-border);
-            border-radius: 8px; /* Estilo más de piedra/escama */
-            color: var(--text);
-            font-size: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            user-select: none;
-            -webkit-user-select: none;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            height: 70px;
+            border: 1px solid var(--glass-border); border-radius: 8px;
+            color: var(--text); font-size: 24px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; user-select: none; -webkit-user-select: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); height: 70px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
-            position: relative;
-            overflow: hidden;
+            position: relative; overflow: hidden;
         }
 
         .btn::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
+            content: ''; position: absolute; inset: 0;
             background: radial-gradient(circle at center, rgba(255,255,255,0.1) 0%, transparent 100%);
-            opacity: 0;
-            transition: opacity 0.2s;
+            opacity: 0; transition: opacity 0.2s;
         }
 
-        .btn:hover::after {
-            opacity: 1;
-        }
+        .btn:hover::after { opacity: 1; }
 
         .btn:active, .btn.active {
-            background: rgba(187, 237, 36, 0.1);
-            border-color: var(--primary);
-            transform: scale(0.95);
-            color: var(--primary);
+            background: rgba(187, 237, 36, 0.1); border-color: var(--primary);
+            transform: scale(0.95); color: var(--primary);
             box-shadow: 0 0 20px var(--primary-glow), inset 0 0 10px var(--primary-glow);
         }
 
-        /* Asignación de posiciones en el grid */
         .btn-up { grid-column: 2; grid-row: 1; border-radius: 8px 8px 4px 4px; }
         .btn-left { grid-column: 1; grid-row: 2; border-radius: 8px 4px 4px 8px; }
         .btn-center { grid-column: 2; grid-row: 2; background: transparent; border: none; box-shadow: none; pointer-events: none; position: relative; }
         
-        /* Decorative center dot */
         .btn-center::after {
-            content: '';
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 16px; height: 16px;
-            border-radius: 3px;
+            content: ''; position: absolute; top: 50%; left: 50%;
+            width: 16px; height: 16px; border-radius: 3px;
             transform: translate(-50%, -50%) rotate(45deg);
             background: var(--glass-border);
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.5), 0 0 5px var(--primary-glow);
@@ -204,62 +132,27 @@
         .btn-right { grid-column: 3; grid-row: 2; border-radius: 4px 8px 8px 4px; }
         .btn-down { grid-column: 2; grid-row: 3; border-radius: 4px 4px 8px 8px; }
 
-        .vertical-controls {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            width: 100%;
-            height: 100%;
-            justify-content: center;
-        }
-
-        .vertical-controls .btn {
-            flex: 1;
-            min-height: 80px;
-            flex-direction: column;
-            font-size: 14px;
-            font-weight: 500;
-            letter-spacing: 1px;
-            gap: 5px;
-        }
-        
-        .vertical-controls .btn span {
-            font-size: 24px;
-        }
+        .vertical-controls { display: flex; flex-direction: column; gap: 15px; width: 100%; height: 100%; justify-content: center; }
+        .vertical-controls .btn { flex: 1; min-height: 80px; flex-direction: column; font-size: 14px; font-weight: 500; letter-spacing: 1px; gap: 5px; }
+        .vertical-controls .btn span { font-size: 24px; }
 
         .btn-stop {
-            background: rgba(225, 29, 72, 0.15);
-            color: var(--danger);
-            border: 1px solid rgba(225, 29, 72, 0.4);
-            width: 100%;
-            max-width: 350px;
-            margin-top: 10px;
-            font-family: 'MedievalSharp', cursive;
-            font-size: 18px;
-            font-weight: 700;
-            letter-spacing: 2px;
-            height: 65px;
-            text-shadow: 0 0 10px rgba(225, 29, 72, 0.5);
-            border-radius: 12px;
+            background: rgba(225, 29, 72, 0.15); color: var(--danger);
+            border: 1px solid rgba(225, 29, 72, 0.4); width: 100%; max-width: 350px;
+            margin-top: 10px; font-family: 'MedievalSharp', cursive;
+            font-size: 18px; font-weight: 700; letter-spacing: 2px; height: 65px;
+            text-shadow: 0 0 10px rgba(225, 29, 72, 0.5); border-radius: 12px;
         }
 
         .btn-stop:active, .btn-stop.active {
-            background: var(--danger);
-            color: white;
-            border-color: var(--danger);
+            background: var(--danger); color: white; border-color: var(--danger);
             box-shadow: 0 0 30px var(--danger-glow), inset 0 0 15px rgba(0,0,0,0.3);
-            transform: scale(0.95);
-            text-shadow: none;
+            transform: scale(0.95); text-shadow: none;
         }
 
         .status-dot {
-            width: 8px;
-            height: 8px;
-            background: var(--primary);
-            border-radius: 50%;
-            display: inline-block;
-            margin-left: 10px;
-            box-shadow: 0 0 12px var(--primary);
+            width: 8px; height: 8px; background: var(--primary); border-radius: 50%;
+            display: inline-block; margin-left: 10px; box-shadow: 0 0 12px var(--primary);
             animation: pulse 2s ease-in-out infinite;
         }
 
@@ -270,31 +163,24 @@
         }
 
         .connection-status {
-            font-size: 13px;
-            font-weight: 500;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            background: rgba(0,0,0,0.2);
-            padding: 8px 16px;
-            border-radius: 20px;
-            border: 1px solid var(--glass-border);
+            font-size: 13px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase;
+            color: var(--text-muted); margin-bottom: 20px; display: flex; align-items: center;
+            background: rgba(0,0,0,0.2); padding: 8px 16px; border-radius: 20px; border: 1px solid var(--glass-border);
+        }
+
+        @media (max-width: 500px) {
+            .controls-wrapper { flex-direction: column; gap: 15px; }
+            .title { font-size: 28px; }
         }
     </style>
 </head>
 <body>
 
     <div class="title">Control Grúa Torre</div>
-    <div class="connection-status">
-        Conectado <span class="status-dot"></span>
-    </div>
+    <div class="connection-status">Conectado <span class="status-dot"></span></div>
 
     <div class="container">
         <div class="controls-wrapper">
-            <!-- Control de Carro y Giro (Izquierda) -->
             <div class="control-group">
                 <h3 class="group-title">Carro & Giro</h3>
                 <div class="d-pad">
@@ -306,7 +192,6 @@
                 </div>
             </div>
 
-            <!-- Control de Elevación (Derecha) -->
             <div class="control-group">
                 <h3 class="group-title">Elevación</h3>
                 <div class="vertical-controls">
@@ -316,85 +201,21 @@
             </div>
         </div>
         
-        <!-- Botón Stop manual de emergencia -->
         <div class="btn btn-stop" data-cmd="S">PARADA DE EMERGENCIA</div>
-        <!-- Botón para ver telemetría -->
-        <div class="btn" id="telemetry-btn" style="margin-top:10px; max-width:260px; background: rgba(11, 22, 30, 0.6);">VER TELEMETRÍA</div>
+        <div class="btn" id="telemetry-btn" style="margin-top:10px; max-width:260px; font-size: 14px; height: 50px; background: rgba(11, 22, 30, 0.6);">VER TELEMETRÍA</div>
     </div>
 
-    <script>
-        // Prevenir el menú contextual en móvil
-        document.addEventListener('contextmenu', event => event.preventDefault());
-
-        let activeCommand = null;
-
-        // Función para enviar comando
-        const sendCommand = (cmd) => {
-            fetch(`/api/command?cmd=${cmd}`)
-                .then(response => {
-                    if (!response.ok) console.error('Error enviando comando');
-                })
-                .catch(err => console.error('Fetch error:', err));
-        };
-
-        const startAction = (e) => {
-            e.preventDefault(); // Previene scroll o zoom
-            const btn = e.target.closest('.btn');
-            if (!btn || btn.classList.contains('btn-center')) return;
-
-            const cmd = btn.getAttribute('data-cmd');
-            if (cmd) {
-                btn.classList.add('active');
-                if (activeCommand !== cmd) {
-                    activeCommand = cmd;
-                    sendCommand(cmd);
-                }
-            }
-        };
-
-        const stopAction = (e) => {
-            e.preventDefault();
-            const btn = e.target.closest('.btn');
-            if (btn) btn.classList.remove('active');
-            
-            if (activeCommand !== null) {
-                activeCommand = null;
-                sendCommand('S'); // Stop
-            }
-        };
-
-        const buttons = document.querySelectorAll('.btn');
-        buttons.forEach(btn => {
-            // Eventos táctiles
-            btn.addEventListener('touchstart', startAction, {passive: false});
-            btn.addEventListener('touchend', stopAction, {passive: false});
-            btn.addEventListener('touchcancel', stopAction, {passive: false});
-            
-            // Eventos de ratón
-            btn.addEventListener('mousedown', startAction);
-            btn.addEventListener('mouseup', stopAction);
-            btn.addEventListener('mouseleave', stopAction);
-        });
-
-        // Evento global para detener si se suelta fuera del botón
-        document.addEventListener('mouseup', () => {
-            if (activeCommand !== null) {
-                activeCommand = null;
-                sendCommand('S');
-            }
-        });
-    </script>
-
-    <!-- Modal de Telemetría -->
-    <div id="telemetry-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center;">
-        <div style="background:#071018; color:var(--text); width:90%; max-width:900px; max-height:80%; overflow:auto; border-radius:12px; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,0.7); border:1px solid rgba(187,237,36,0.08);">
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
-                <h3 style="margin:0; font-family:'MedievalSharp', cursive; color:var(--primary);">Telemetría</h3>
-                <button id="telemetry-close" style="background:transparent; border:1px solid rgba(255,255,255,0.06); color:var(--text); padding:6px 10px; border-radius:8px;">Cerrar</button>
+    <div id="telemetry-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:#071018; color:var(--text); width:90%; max-width:800px; max-height:80%; overflow:auto; border-radius:12px; padding:20px; box-shadow:0 10px 30px rgba(0,0,0,0.7); border:1px solid rgba(187,237,36,0.08);">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px;">
+                <h3 style="margin:0; font-family:'MedievalSharp', cursive; color:var(--primary); font-size:22px;">Historial de Telemetría</h3>
+                <button id="telemetry-close" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text); padding:6px 14px; border-radius:8px; cursor:pointer;">Cerrar</button>
             </div>
-            <div id="telemetry-content" style="margin-top:12px; font-family:monospace; font-size:12px; color:var(--text);">
+            <div style="margin-top:15px; font-family:monospace; font-size:13px;">
                 <table id="telemetry-table" style="width:100%; border-collapse:collapse;">
-                    <thead><tr style="text-align:left; color:var(--text-muted);"><th style="padding:6px 8px; width:140px;">Timestamp</th><th style="padding:6px 8px;">Evento</th><th style="padding:6px 8px;">Detalles</th></tr></thead>
+                    <thead>
+                        <tr style="text-align:left; color:var(--text-muted); border-bottom: 2px solid rgba(187,237,36,0.2);"><th style="padding:8px; width:140px;">Timestamp</th><th style="padding:8px; width:120px;">Evento</th><th style="padding:8px;">Detalles</th></tr>
+                    </thead>
                     <tbody></tbody>
                 </table>
             </div>
@@ -402,36 +223,81 @@
     </div>
 
     <script>
-        // Telemetría: mostrar modal y cargar logs
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        let activeCommand = null;
+
+        const sendCommand = (cmd) => {
+            fetch(`/api/command?cmd=${cmd}`)
+                .catch(err => console.error('Fetch error:', err));
+        };
+
+        const startAction = (e) => {
+            e.preventDefault(); 
+            const btn = e.target.closest('.btn');
+            if (!btn || btn.id === 'telemetry-btn' || btn.id === 'telemetry-close') return;
+
+            const cmd = btn.getAttribute('data-cmd');
+            if (cmd && activeCommand !== cmd) {
+                btn.classList.add('active');
+                activeCommand = cmd;
+                sendCommand(cmd);
+            }
+        };
+
+        const stopAction = (e) => {
+            e.preventDefault();
+            const btn = e.target.closest('.btn');
+            if (btn && btn.id !== 'telemetry-btn') btn.classList.remove('active');
+            if (activeCommand !== null) {
+                activeCommand = null;
+                sendCommand('S');
+            }
+        };
+
+        const buttons = document.querySelectorAll('.btn');
+        buttons.forEach(btn => {
+            if(btn.id !== 'telemetry-btn') {
+                btn.addEventListener('touchstart', startAction, {passive: false});
+                btn.addEventListener('touchend', stopAction, {passive: false});
+                btn.addEventListener('touchcancel', stopAction, {passive: false});
+                btn.addEventListener('mousedown', startAction);
+                btn.addEventListener('mouseup', stopAction);
+                btn.addEventListener('mouseleave', stopAction);
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (activeCommand !== null) { activeCommand = null; sendCommand('S'); }
+        });
+
+        // Cargar registros en la tabla
         document.getElementById('telemetry-btn').addEventListener('click', async () => {
             const modal = document.getElementById('telemetry-modal');
             const tbody = document.querySelector('#telemetry-table tbody');
-            tbody.innerHTML = '<tr><td colspan="3" style="padding:12px; color:var(--text-muted)">Cargando...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="3" style="padding:12px; color:var(--text-muted)">Cargando registros...</td></tr>';
             modal.style.display = 'flex';
+            
             try {
                 const res = await fetch('/api/telemetry');
-                if (!res.ok) throw new Error('HTTP ' + res.status);
                 const text = await res.text();
                 const lines = text.split('\n').filter(l => l.trim().length > 0);
                 tbody.innerHTML = '';
+                
                 for (let i = lines.length - 1; i >= 0; i--) {
                     try {
                         const obj = JSON.parse(lines[i]);
-                        const ts = obj.ts || '';
+                        const ts = obj.ts ? Number(obj.ts).toFixed(1) + "s" : '';
                         const ev = obj.event || '';
                         const det = obj.details ? JSON.stringify(obj.details) : '';
                         const tr = document.createElement('tr');
-                        tr.innerHTML = `<td style="padding:6px 8px; vertical-align:top;">${ts}</td><td style="padding:6px 8px; vertical-align:top;">${ev}</td><td style="padding:6px 8px; vertical-align:top;">${det}</td>`;
+                        tr.style.borderBottom = "1px solid rgba(255,255,255,0.05)";
+                        tr.innerHTML = `<td style="padding:8px; color:var(--primary);">${ts}</td><td style="padding:8px; font-weight:bold;">${ev}</td><td style="padding:8px; color:var(--text-muted);">${det}</td>`;
                         tbody.appendChild(tr);
-                    } catch (e) {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `<td colspan="3" style="padding:6px 8px; color:var(--text-muted)">${lines[i]}</td>`;
-                        tbody.appendChild(tr);
-                    }
+                    } catch (e) { }
                 }
                 if (lines.length === 0) tbody.innerHTML = '<tr><td colspan="3" style="padding:12px; color:var(--text-muted)">No hay eventos.</td></tr>';
             } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="3" style="padding:12px; color:var(--danger)">Error cargando telemetría: ${err}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="3" style="padding:12px; color:var(--danger)">Error: ${err}</td></tr>`;
             }
         });
 
