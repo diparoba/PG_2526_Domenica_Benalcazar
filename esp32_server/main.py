@@ -1,130 +1,149 @@
-import uasyncio as asyncio
-import machine
-from machine import UART, Pin
-import json
-import telemetry
+import network
+import socket
+import time
+from machine import Pin, ADC
 
-# Configuración de pines
-LED = Pin(2, Pin.OUT)
-# UART2 o UART1 (MicroPython ESP32 soporta UART 1 y 2). Usaremos UART 1 con TX en 17.
-uart = UART(1, baudrate=9600, tx=17, rx=16)
+# =====================================================================
+# 1. CONFIGURACIÓN DE PINES PARA EL RESPALDO FÍSICO (HÍBRIDO)
+# =====================================================================
+# Pines de ejemplo en el ESP32-S3 para botones o joysticks físicos por "cualquier cosa"
+boton_emergencia_fisico = Pin(4, Pin.IN, Pin.PULL_UP) # Botón físico tipo E-STOP
 
-# Función para leer el HTML
-def get_html():
-    try:
-        with open('index.html', 'r') as f:
-            return f.read()
-    except Exception as e:
-        return "<h1>Error: index.html no encontrado</h1>"
+# Si usan un joystick físico analógico (dos ejes: X para Giro, Y para Carro)
+adc_giro_x = ADC(Pin(5))  
+adc_carro_y = ADC(Pin(6))
+adc_giro_x.atten(ADC.ATTEN_11DB) # Rango de voltaje completo (0-3.3V)
+adc_carro_y.atten(ADC.ATTEN_11DB)
 
-# Enviar comando al Arduino vía UART
-def send_uart_command(cmd):
-    try:
-        uart.write(cmd)
-        print("Enviado:", cmd)
-        # Registrar telemetría de envío UART
-        try:
-            telemetry.log_event('uart_send', {'cmd': cmd})
-        except Exception:
-            pass
-        # Parpadear LED de estado
-        LED.value(1)
-        # Utilizamos un pequeño timer no asíncrono para el LED, o simplemente lo dejamos encendido un momento
-    except Exception as e:
-        print("Error UART:", e)
-        try:
-            telemetry.log_event('error', {'where': 'send_uart_command', 'error': str(e)})
-        except Exception:
-            pass
+# Si usan botones simples para subir/bajar gancho físicamente
+btn_subir_fisico = Pin(7, Pin.IN, Pin.PULL_UP)
+btn_bajar_fisico = Pin(8, Pin.IN, Pin.PULL_UP)
 
-# Handler de las peticiones HTTP
-async def handle_client(reader, writer):
-    LED.value(1)
-    try:
-        request_line = await reader.readline()
-        if not request_line:
-            return
+# =====================================================================
+# 2. ACTUADORES: FUNCIONES MODULARES DE MOVIMIENTO FÍSICO
+# =====================================================================
+def detener_todo():
+    # Prioridad absoluta en el hardware
+    pass
+
+def mover_carro_adelante():
+    pass
+
+def mover_carro_atras():
+    pass
+
+def girar_derecha():
+    pass
+
+def girar_izquierda():
+    pass
+
+def subir_gancho():
+    pass
+
+def bajar_gancho():
+    pass
+
+# Enrutador cinemático unificado
+def procesar_comando(cmd):
+    if cmd == 'F': mover_carro_adelante()
+    elif cmd == 'B': mover_carro_atras()
+    elif cmd == 'R': girar_derecha()
+    elif cmd == 'L': girar_izquierda()
+    elif cmd == 'U': subir_gancho()
+    elif cmd == 'D': bajar_gancho()
+    elif cmd == 'S': detener_todo()
+
+# =====================================================================
+# 3. LECTURA DEL PANEL FÍSICO DE RESPALDO (HARDWARE)
+# =====================================================================
+def leer_mandos_fisicos():
+    """
+    Esta función revisa el estado de los componentes físicos.
+    Si detecta acción física, genera un comando local.
+    """
+    # 1. Prioridad Máxima: Parada de emergencia física (PULL_UP lee 0 al presionar)
+    if boton_emergencia_fisico.value() == 0:
+        return 'S'
         
-        request_line = request_line.decode('utf-8').strip()
-        print("Petición recibida:", request_line)
-        # Registrar telemetría de petición HTTP
-        try:
-            telemetry.log_event('http_request', {'request_line': request_line})
-        except Exception:
-            pass
-        
-        # Ignorar headers restantes para simplificar
-        while True:
-            line = await reader.readline()
-            if not line or line == b'\r\n':
-                break
-                
-        # Parsear la petición
-        if request_line.startswith('GET / HTTP'):
-            html = get_html()
-            response = 'HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n' + html
-            writer.write(response.encode('utf-8'))
-            await writer.drain()
-            
-        elif request_line.startswith('POST /api/command'):
-            # En una petición POST básica sin Content-Length riguroso, 
-            # leeremos un par de bytes o utilizaremos la URL para ser más seguros con MicroPython asíncrono,
-            # pero dado que pedimos Fetch, leeremos el body.
-            # NOTA: Para MicroPython es más seguro usar peticiones GET como /api/command?cmd=F
-            pass
-            
-        elif request_line.startswith('GET /api/command?cmd='):
-            # Extraer el comando de la URL
-            cmd = request_line.split('cmd=')[1].split(' ')[0]
-            if cmd in ['F', 'B', 'U', 'D', 'L', 'R', 'S']:
-                send_uart_command(cmd)
-                try:
-                    telemetry.log_event('command_received', {'cmd': cmd})
-                except Exception:
-                    pass
-                response = 'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nConnection: close\r\n\r\n{"status":"ok"}'
-            else:
-                response = 'HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n'
-            
-            writer.write(response.encode('utf-8'))
-            await writer.drain()
+    # 2. Lectura de elevación física (Gancho)
+    if btn_subir_fisico.value() == 0:
+        return 'U'
+    if btn_bajar_fisico.value() == 0:
+        return 'D'
 
-        elif request_line.startswith('GET /api/telemetry'):
-            # Devolver logs de telemetría como texto plano
-            try:
-                logs = telemetry.read_all()
-                response = 'HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\n' + logs
-            except Exception as e:
-                response = 'HTTP/1.1 500 Internal Server Error\r\nConnection: close\r\n\r\n'
-            writer.write(response.encode('utf-8'))
-            await writer.drain()
-            
-        else:
-            response = 'HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n'
-            writer.write(response.encode('utf-8'))
-            await writer.drain()
-            
-    except Exception as e:
-        print("Error handle_client:", e)
-        try:
-            telemetry.log_event('error', {'where': 'handle_client', 'error': str(e)})
-        except Exception:
-            pass
-    finally:
-        writer.close()
-        await writer.wait_closed()
-        LED.value(0)
-
-# Corutina principal
-async def main():
-    print("Iniciando servidor web asíncrono...")
-    server = await asyncio.start_server(handle_client, '0.0.0.0', 80)
+    # 3. Lectura de Joystick Analógico (Filtro de zona muerta física entre 1500 y 2500)
+    val_x = adc_giro_x.read()
+    val_y = adc_carro_y.read()
     
-    while True:
-        await asyncio.sleep(1)
+    # Evaluar prioridades de ejes (como en el control digital)
+    if abs(val_x - 2048) > abs(val_y - 2048):
+        if val_x > 2800: return 'R' # Giro Horario
+        if val_x < 1200: return 'L' # Giro Antihorario
+    else:
+        if val_y > 2800: return 'F' # Carro Adelante
+        if val_y < 1200: return 'B' # Carro Atrás
+        
+    return None # Si nadie está tocando los controles físicos
 
-# Iniciar loop
-try:
-    asyncio.run(main())
-except KeyboardInterrupt:
-    print("\nServidor web detenido desde el teclado.")
+# =====================================================================
+# 4. CONFIGURACIÓN DE RED (AP LOCAL)
+# =====================================================================
+ap = network.WLAN(network.AP_IF)
+ap.active(True)
+ap.config(essid='Grua_Industrial_Control', password='PolitecnicaEPN')
+
+# Configurar el socket del servidor de modo "No Bloqueante"
+# Esto es vital para que el ESP32 no se quede congelado esperando la web 
+# y pueda seguir leyendo los botones físicos al mismo tiempo.
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.bind(('', 80))
+s.listen(5)
+s.setblocking(False) 
+
+print("\n=== SISTEMA HÍBRIDO OPERATIVO ===")
+print("IP del servidor:", ap.ifconfig()[0])
+print("==================================\n")
+
+# =====================================================================
+# 5. BUCLE PRINCIPAL DE CONTROL HÍBRIDO SIMULTÁNEO
+# =====================================================================
+ultimo_comando = 'S'
+
+while True:
+    comando_actual = None
+    
+    # --- FRENTE 1: Intentar leer si llegó algo desde la interfaz Web ---
+    try:
+        conn, addr = s.accept()
+        request = conn.recv(1024).decode('utf-8')
+        if request:
+            first_line = request.split('\n')[0]
+            if "/api/command?cmd=" in first_line:
+                partes = first_line.split("cmd=")
+                comando_actual = partes[1][0]
+                
+                # Responder rápido a la interfaz web para evitar lag
+                conn.send('HTTP/1.1 200 OK\nContent-Type: text/plain\n\nOK')
+        conn.close()
+    except OSError:
+        # No hay conexiones web entrantes en este instante, continúa sin trabarse
+        pass
+
+    # --- FRENTE 2: Si la web está en reposo, revisar los mandos físicos ---
+    if comando_actual is None:
+        comando_fisico = leer_mandos_fisicos()
+        if comando_fisico is not None:
+            comando_actual = comando_fisico
+        else:
+            # Si nadie interactúa ni por web ni por físico y el último comando no fue detenerse
+            if ultimo_comando != 'S':
+                comando_actual = 'S'
+
+    # --- EJECUCIÓN UNIFICADA ---
+    if comando_actual is not None and comando_actual != ultimo_comando:
+        print(f"[HÍBRIDO] Cambio de estado a comando: {comando_actual}")
+        procesar_comando(comando_actual)
+        ultimo_comando = comando_actual
+        
+    time.sleep(0.02) # Ciclo de estabilidad para el procesador (20ms)

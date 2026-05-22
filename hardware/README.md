@@ -1,8 +1,12 @@
-# Diseño de Hardware y Planos
+# Sistema de Control Híbrido para Grúa Torre (ESP32 + Arduino Nano)
 
-Esta carpeta está destinada a guardar todos los archivos relacionados con la estructura física y electrónica de la Grúa Torre. 
+Este proyecto desarrolla una solución de control para una grúa torre industrial a escala, integrando una arquitectura de doble procesador para la gestión de actuadores y la interfaz de usuario remota.
 
-Para que tu proyecto de grado esté completo, deberías incluir aquí:
-1. **Diagrama de Conexiones (Esquemático):** Una imagen o archivo de Proteus/Fritzing/EasyEDA que muestre cómo están conectados el Arduino Nano, el ESP32, los joysticks y los drivers (TB6612FNG y DRV8825).
-2. **Modelos 3D / Planos Mecánicos:** Si imprimiste la grúa en 3D o cortaste madera/acrílico, pon aquí los archivos STL o los planos con las medidas.
-3. **Datasheets (Opcional):** Hojas de datos técnicos de los motores N20 o del motor Nema 17 que utilizaste.
+## Arquitectura del Sistema
+- **Unidad de Servidor (ESP32 DevKit V1):** Gestiona la infraestructura de red mediante un servidor web asíncrono (`uasyncio`), operando bajo un Punto de Acceso (AP) dedicado.
+- **Unidad de Control (Arduino Nano):** Gestiona la cinemática de los actuadores (motores DC y motor paso a paso) mediante el parseo de comandos seriales (UART).
+
+## Características Técnicas
+- **Control Dual:** Sistema de operación concurrente que permite la entrada de comandos remotos (vía web) y manuales (vía joysticks físicos).
+- **Seguridad Industrial:** Implementación de un mecanismo de *watchdog* (timeout de seguridad) que garantiza la detención inmediata de los actuadores ante la pérdida del enlace inalámbrico.
+- **Eficiencia:** Comunicación serial de baja latencia a 9600 bps y procesamiento no bloqueante en ambos microcontroladores.

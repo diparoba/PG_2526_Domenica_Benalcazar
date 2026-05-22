@@ -1,59 +1,78 @@
 # ==========================================================
 # ARCHIVO: boot.py
-# DESCRIPCIÓN: Conexión inicial a la red WiFi (Sin bloqueos)
+# DESCRIPCIÓN: Menú de inicio interactivo con Timeout + WiFi
 # ==========================================================
-import network
+import sys
+import uselect
 import time
+import network
 
-def conectar_wifi_universal():
+def menu_inicio(timeout_segundos=5):
+    """
+    Muestra un menú en la terminal. Avanza automáticamente si no hay respuesta.
+    """
+    print("\n" + "="*40)
+    print("      SISTEMA DE CONTROL - GRÚA TORRE")
+    print("="*40)
+    print("1. Iniciar sistema normalmente (Modo Ejecución)")
+    print("2. Detener en modo programación (Liberar REPL)")
+    print(f"Selecciona una opción (Avanza de forma automática en {timeout_segundos}s)...")
+    
+    # Configurar la terminal para escuchar la entrada sin bloquear
+    poller = uselect.poll()
+    poller.register(sys.stdin, uselect.POLLIN)
+    
+    tiempo_inicio = time.time()
+    while (time.time() - tiempo_inicio) < timeout_segundos:
+        if poller.poll(100):
+            caracter = sys.stdin.read(1)
+            if caracter == '1':
+                print("\n-> Opción 1 seleccionada. Iniciando...")
+                return True
+            elif caracter == '2':
+                print("\n-> Opción 2 seleccionada. Modo programación activo.")
+                print("Consola REPL liberada. Puedes modificar tus archivos tranquilamente.")
+                return False
+    
+    print("\n-> Tiempo de espera agotado. Iniciando de forma automática...")
+    return True
+
+def conectar_wifi_interactivo():
     wlan = network.WLAN(network.STA_IF)
+    
+    # Forzamos un reset del hardware WiFi para evitar el "Internal State Error"
+    wlan.active(False)
+    time.sleep(0.2)
     wlan.active(True)
     
-    # Si la placa ya se conectó sola al arrancar
-    if wlan.isconnected():
-        print(f"\n[WIFI] Conexión automática activa: {wlan.config('ssid')}")
-        print(f"[WIFI] Dirección IP: {wlan.ifconfig()[0]}")
-        return True
-        
-    print("\n--- CONFIGURACIÓN DE RED GRÚA TORRE ---")
-    ssid_predeterminado = "Cudy-0138" # Red de tu aula/colegio
-    
-    print(f"Buscando red predeterminada: {ssid_predeterminado}...")
-    wlan.connect(ssid_predeterminado)
-    
-    # Esperar un momento a la conexión automática
-    timeout = 8
-    while not wlan.isconnected() and timeout > 0:
-        time.sleep(1)
-        timeout -= 1
-        print("⚡", end="")
-        
-    if wlan.isconnected():
-        print(f"\n[OK] ¡Conectado con éxito a {wlan.config('ssid')}!")
-        print(f"[WIFI] Dirección IP: {wlan.ifconfig()[0]}")
-        return True
-    
-    # Si falla, pide ingresar los datos manualmente por consola
-    print("\n[AVISO] No se detectó la red automática.")
-    ssid = input("Ingresa el nombre de tu WiFi (SSID): ").strip()
+    print("\n--- CONFIGURACIÓN DE RED MANUAL ---")
+    ssid = input("Ingresa el nombre del WiFi (SSID): ").strip()
     password = input("Ingresa la contraseña del WiFi: ").strip()
     
-    print(f"Conectando a {ssid}...")
+    print(f"\nConectando a la red: {ssid}...")
     wlan.connect(ssid, password)
     
-    timeout = 12
+    timeout = 15
     while not wlan.isconnected() and timeout > 0:
         time.sleep(1)
         timeout -= 1
         print("⚡", end="")
         
     if wlan.isconnected():
-        print(f"\n[OK] ¡Conectado con éxito a {ssid}!")
-        print(f"[WIFI] Dirección IP: {wlan.ifconfig()[0]}")
+        # Corregido usando estrictamente el índice [0] para la IP dinámica
+        print(f"\n\n[OK] ¡Conectado con éxito a {ssid}!")
+        print(f"[WIFI] Dirección IP asignada: {wlan.ifconfig()[0]}")
+        print("-" * 40)
         return True
     else:
-        print("\n[ERROR] No se pudo conectar al WiFi.")
+        print("\n\n[ERROR] No se pudo conectar. Verifica los datos.")
+        print("-" * 40)
         return False
 
-# Arrancar la conexión
-conectar_wifi_universal()
+# --- FLUJO PRINCIPAL DE ARRANQUE ---
+# Ejecutamos el menú con contador antes de levantar el WiFi o el main
+if menu_inicio(timeout_segundos=5):
+    conectar_wifi_interactivo()
+else:
+    # Si eliges la opción 2, cerramos el script para darte el control total de Thonny
+    sys.exit()

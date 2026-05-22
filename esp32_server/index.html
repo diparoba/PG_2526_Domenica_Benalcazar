@@ -3,306 +3,499 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Grúa Torre - Control Remoto</title>
+    <title>Estación de Control de Grúa Torre</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=MedievalSharp&family=Outfit:wght@300;500;700&display=swap');
-
         :root {
-            --bg-gradient: radial-gradient(circle at 50% 20%, #152226 0%, #040608 100%);
-            --glass-bg: rgba(15, 20, 25, 0.7);
-            --glass-border: rgba(187, 237, 36, 0.2);
-            --primary: #bbed24; /* Ojos de Chimuelo */
-            --primary-glow: rgba(187, 237, 36, 0.5);
-            --danger: #e11d48; /* Cola roja de emergencia */
-            --danger-glow: rgba(225, 29, 72, 0.6);
-            --text: #f8fafc;
-            --text-muted: #94a3b8;
+            --crane-yellow: #facc15; /* Amarillo de maquinaria pesada */
+            --bg-dark: #090d12;
+            --panel-bg: #151f2c;
+            --danger-red: #dc2626;
+            --iron-gray: #475569;
+            --steel-dark: #1e293b;
         }
 
         body {
-            margin: 0; padding: 0;
-            font-family: 'Outfit', sans-serif;
-            background: var(--bg-gradient);
-            background-attachment: fixed;
-            color: var(--text);
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            min-height: 100vh; overflow: hidden;
-            touch-action: none; position: relative;
+            background-color: var(--bg-dark);
+            color: #ffffff;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+            user-select: none;
+            touch-action: none;
         }
 
-        body::before, body::after {
-            content: ''; position: absolute;
-            width: 250px; height: 150px; border-radius: 50%;
-            filter: blur(80px); z-index: -1;
-            background: rgba(187, 237, 36, 0.18); top: 10%;
-        }
-        body::before { left: 15%; transform: rotate(-15deg); }
-        body::after { right: 15%; transform: rotate(15deg); }
-
-        .title {
-            margin-top: 30px; font-family: 'MedievalSharp', cursive;
-            font-size: 38px; font-weight: 700; letter-spacing: 4px;
-            text-align: center; text-transform: uppercase; color: #ffffff;
-            text-shadow: 0 0 20px rgba(187, 237, 36, 0.4), 0 5px 15px rgba(0,0,0,0.9);
-            border-bottom: 2px solid rgba(187, 237, 36, 0.4);
-            padding-bottom: 10px; width: 80%; max-width: 400px;
+        /* CONSOLA DE MANDO DE MAQUINARIA PESADA */
+        .grue-console {
+            width: 100%;
+            max-width: 400px;
+            background-color: var(--panel-bg);
+            border: 4px solid #2e435e;
+            border-radius: 16px;
+            padding: 12px;
+            box-sizing: border-box;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.7);
+            position: relative;
+            overflow: hidden;
         }
 
-        .container {
-            display: flex; flex-direction: column; gap: 20px;
-            padding: 20px; width: 100%; max-width: 700px;
-            box-sizing: border-box; z-index: 1; align-items: center;
+        /* Franjas de advertencia de seguridad (Amarillo/Negro) */
+        .hazard-lines {
+            height: 10px;
+            background: repeating-linear-gradient(
+                -45deg,
+                #000000,
+                #000000 8px,
+                var(--crane-yellow) 8px,
+                var(--crane-yellow) 16px
+            );
+            margin: -12px -12px 10px -12px;
+            border-bottom: 2px solid #000;
         }
 
-        .controls-wrapper {
-            display: flex; flex-direction: row;
-            justify-content: center; align-items: stretch;
-            gap: 20px; width: 100%;
+        .hazard-lines.bottom {
+            margin: 14px -12px -12px -12px;
+            border-bottom: none;
+            border-top: 2px solid #000;
         }
 
-        .control-group {
-            background: var(--glass-bg);
-            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--glass-border);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
-            border-radius: 24px; padding: 25px;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            transition: transform 0.3s ease; flex: 1;
-        }
-        
-        .control-group:hover { transform: translateY(-2px); }
-
-        .group-title {
-            margin: 0 0 15px 0; font-family: 'MedievalSharp', cursive;
-            font-size: 14px; color: var(--primary);
-            text-transform: uppercase; letter-spacing: 2px;
-            display: flex; align-items: center; gap: 5px;
-            text-shadow: 0 0 8px rgba(187, 237, 36, 0.3); text-align: center;
+        h2 {
+            margin: 0 0 12px 0;
+            font-size: 1.05rem;
+            letter-spacing: 1.5px;
+            font-weight: 800;
+            color: var(--crane-yellow);
+            text-align: center;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
 
-        .group-title::before, .group-title::after {
-            content: ''; height: 1px; width: 15px; background: var(--glass-border);
+        /* DASHBOARD DEL GEMELO DIGITAL */
+        .monitor-dashboard {
+            background: linear-gradient(180deg, #07111c 0%, #03070d 100%);
+            border: 2px solid #22374e;
+            border-radius: 10px;
+            padding: 8px;
+            margin-bottom: 14px;
+            display: flex;
+            justify-content: space-around;
+            box-shadow: inset 0 0 20px rgba(0, 200, 255, 0.15);
         }
 
-        .d-pad {
-            display: grid; grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(3, 1fr); gap: 12px;
-            width: 100%; max-width: 250px;
+        .view-container {
+            text-align: center;
+            font-size: 0.65rem;
+            font-weight: 800;
+            color: #94a3b8;
         }
 
-        .btn {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--glass-border); border-radius: 8px;
-            color: var(--text); font-size: 24px;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; user-select: none; -webkit-user-select: none;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); height: 70px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
-            position: relative; overflow: hidden;
+        .view-container span {
+            color: var(--crane-yellow);
         }
 
-        .btn::after {
-            content: ''; position: absolute; inset: 0;
-            background: radial-gradient(circle at center, rgba(255,255,255,0.1) 0%, transparent 100%);
-            opacity: 0; transition: opacity 0.2s;
+        svg {
+            background: #040910;
+            border: 1px solid #1b2e44;
+            border-radius: 6px;
+            margin-top: 4px;
         }
 
-        .btn:hover::after { opacity: 1; }
-
-        .btn:active, .btn.active {
-            background: rgba(187, 237, 36, 0.1); border-color: var(--primary);
-            transform: scale(0.95); color: var(--primary);
-            box-shadow: 0 0 20px var(--primary-glow), inset 0 0 10px var(--primary-glow);
+        /* CONTENEDOR DE AMBOS MANDOS */
+        .joysticks-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            padding: 4px;
         }
 
-        .btn-up { grid-column: 2; grid-row: 1; border-radius: 8px 8px 4px 4px; }
-        .btn-left { grid-column: 1; grid-row: 2; border-radius: 8px 4px 4px 8px; }
-        .btn-center { grid-column: 2; grid-row: 2; background: transparent; border: none; box-shadow: none; pointer-events: none; position: relative; }
-        
-        .btn-center::after {
-            content: ''; position: absolute; top: 50%; left: 50%;
-            width: 16px; height: 16px; border-radius: 3px;
-            transform: translate(-50%, -50%) rotate(45deg);
-            background: var(--glass-border);
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5), 0 0 5px var(--primary-glow);
+        .joystick-card {
+            background: #0b121a;
+            border: 1px solid #22354b;
+            border-radius: 12px;
+            padding: 10px 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.6);
+            position: relative;
+            height: 150px;
+            justify-content: space-between;
         }
 
-        .btn-right { grid-column: 3; grid-row: 2; border-radius: 4px 8px 8px 4px; }
-        .btn-down { grid-column: 2; grid-row: 3; border-radius: 4px 4px 8px 8px; }
-
-        .vertical-controls { display: flex; flex-direction: column; gap: 15px; width: 100%; height: 100%; justify-content: center; }
-        .vertical-controls .btn { flex: 1; min-height: 80px; flex-direction: column; font-size: 14px; font-weight: 500; letter-spacing: 1px; gap: 5px; }
-        .vertical-controls .btn span { font-size: 24px; }
-
-        .btn-stop {
-            background: rgba(225, 29, 72, 0.15); color: var(--danger);
-            border: 1px solid rgba(225, 29, 72, 0.4); width: 100%; max-width: 350px;
-            margin-top: 10px; font-family: 'MedievalSharp', cursive;
-            font-size: 18px; font-weight: 700; letter-spacing: 2px; height: 65px;
-            text-shadow: 0 0 10px rgba(225, 29, 72, 0.5); border-radius: 12px;
+        .joystick-label {
+            font-size: 0.65rem;
+            font-weight: bold;
+            color: #cbd5e1;
+            letter-spacing: 0.5px;
+            text-align: center;
         }
 
-        .btn-stop:active, .btn-stop.active {
-            background: var(--danger); color: white; border-color: var(--danger);
-            box-shadow: 0 0 30px var(--danger-glow), inset 0 0 15px rgba(0,0,0,0.3);
-            transform: scale(0.95); text-shadow: none;
+        /* PALANCA 1: BASE CIRCULAR (GIRO Y CARRO 360°) */
+        .joystick-base-circular {
+            width: 105px;
+            height: 105px;
+            background: radial-gradient(circle, #1a293a 0%, #060a0f 100%);
+            border-radius: 50%;
+            border: 3px solid #334e6e;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
         }
 
-        .status-dot {
-            width: 8px; height: 8px; background: var(--primary); border-radius: 50%;
-            display: inline-block; margin-left: 10px; box-shadow: 0 0 12px var(--primary);
-            animation: pulse 2s ease-in-out infinite;
+        /* PALANCA 2: BASE LINEAL (GANCHO - TRACTOR) */
+        .joystick-base-linear {
+            width: 44px;
+            height: 105px;
+            background: linear-gradient(90deg, #090f14 0%, #1a293a 50%, #090f14 100%);
+            border-radius: 10px;
+            border: 3px solid #334e6e;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
         }
 
-        @keyframes pulse {
-            0% { transform: scale(1); opacity: 0.8; box-shadow: 0 0 10px var(--primary); }
-            50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 20px var(--primary); }
-            100% { transform: scale(1); opacity: 0.8; box-shadow: 0 0 10px var(--primary); }
+        /* PERILLA ERGONÓMICA DE LOS JOYSTICKS */
+        .joystick-knob {
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle at 35% 35%, #52657a 0%, #1e2936 60%, #090d12 100%);
+            border-radius: 50%;
+            position: absolute;
+            cursor: pointer;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.8), inset 0 2px 4px rgba(255,255,255,0.15);
+            border: 2px solid #475d7a;
+            touch-action: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .connection-status {
-            font-size: 13px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase;
-            color: var(--text-muted); margin-bottom: 20px; display: flex; align-items: center;
-            background: rgba(0,0,0,0.2); padding: 8px 16px; border-radius: 20px; border: 1px solid var(--glass-border);
+        .joystick-knob::after {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--danger-red);
+            border-radius: 50%;
+            box-shadow: 0 0 6px var(--danger-red);
         }
 
-        @media (max-width: 500px) {
-            .controls-wrapper { flex-direction: column; gap: 15px; }
-            .title { font-size: 28px; }
+        /* Posición central por defecto para el control lineal */
+        #joyGancho {
+            top: 30px;
+        }
+
+        /* INDICADORES VISUALES DE DIRECCIÓN (FLECHAS) */
+        .guide {
+            position: absolute;
+            font-size: 0.6rem;
+            color: #527094;
+            font-weight: bold;
+        }
+        .guide-up    { top: 4px; }
+        .guide-down  { bottom: 4px; }
+        .guide-left  { left: 6px; }
+        .guide-right { right: 6px; }
+
+        /* SECCIÓN INFERIOR: PARADA DE EMERGENCIA */
+        .emergency-container {
+            margin-top: 14px;
+        }
+
+        .btn-estop {
+            width: 100%;
+            height: 46px;
+            background: linear-gradient(145deg, #ef4444, #991b1b);
+            border: 2px solid #7f1d1d;
+            border-bottom: 5px solid #4c0519;
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 0.88rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.25);
+            transition: all 0.05s ease;
+        }
+
+        .btn-estop:active {
+            background: #7f1d1d;
+            border-bottom: 2px solid #4c0519;
+            transform: translateY(3px);
+            box-shadow: 0 0 12px var(--danger-red);
         }
     </style>
 </head>
 <body>
 
-    <div class="title">Control Grúa Torre</div>
-    <div class="connection-status">Conectado <span class="status-dot"></span></div>
+    <div class="grue-console">
+        <div class="hazard-lines"></div>
 
-    <div class="container">
-        <div class="controls-wrapper">
-            <div class="control-group">
-                <h3 class="group-title">Carro & Giro</h3>
-                <div class="d-pad">
-                    <div class="btn btn-up" data-cmd="F">▲</div>
-                    <div class="btn btn-left" data-cmd="L">◀</div>
-                    <div class="btn-center"></div>
-                    <div class="btn btn-right" data-cmd="R">▶</div>
-                    <div class="btn btn-down" data-cmd="B">▼</div>
+        <h2>SISTEMA DE CONTROL DE GRÚA INDUSTRIAL</h2>
+
+        <div class="monitor-dashboard">
+            <div class="view-container">
+                <span>VISTA PLANTA (GIRO)</span><br>
+                <svg width="170" height="170" id="svgPlanta">
+                    <defs>
+                        <linearGradient id="metal3D" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#94a3b8"/>
+                            <stop offset="50%" stop-color="#475569"/>
+                            <stop offset="100%" stop-color="#1e293b"/>
+                        </linearGradient>
+                    </defs>
+
+                    <circle cx="85" cy="85" r="75" stroke="#162e49" stroke-width="1" fill="none" stroke-dasharray="3"/>
+                    <circle cx="85" cy="85" r="45" stroke="#162e49" stroke-width="1" fill="none" stroke-dasharray="3"/>
+                    
+                    <rect x="50" y="50" width="70" height="70" rx="10" fill="none" stroke="#224469" stroke-width="2"/>
+                    <circle cx="56" cy="56" r="2.5" fill="#1e293b" stroke="#475569" stroke-width="0.8"/>
+                    <circle cx="114" cy="56" r="2.5" fill="#1e293b" stroke="#475569" stroke-width="0.8"/>
+                    <circle cx="56" cy="114" r="2.5" fill="#1e293b" stroke="#475569" stroke-width="0.8"/>
+                    <circle cx="114" cy="114" r="2.5" fill="#1e293b" stroke="#475569" stroke-width="0.8"/>
+                    
+                    <rect x="73" y="71" width="24" height="28" fill="none" stroke="var(--crane-yellow)" stroke-width="1.5"/>
+                    <circle cx="85" cy="85" r="7" fill="url(#metal3D)"/>
+
+                    <g id="plumaGiro" transform="rotate(0 85 85)">
+                        <rect x="40" y="81" width="45" height="8" fill="#334155" rx="1"/>
+                        <rect x="85" y="80" width="78" height="10" fill="none" stroke="var(--crane-yellow)" stroke-width="2" rx="1"/>
+                        <line x1="100" y1="80" x2="110" y2="90" stroke="var(--crane-yellow)" stroke-width="1"/>
+                        <line x1="120" y1="80" x2="130" y2="90" stroke="var(--crane-yellow)" stroke-width="1"/>
+                        <line x1="140" y1="80" x2="150" y2="90" stroke="var(--crane-yellow)" stroke-width="1"/>
+                        
+                        <rect id="carroPlanta" x="110" y="77" width="16" height="16" fill="#ffffff" rx="2" stroke="#000000" stroke-width="1"/>
+                    </g>
+                </svg>
+            </div>
+
+            <div class="view-container">
+                <span>VISTA PERFIL (GANCHO)</span><br>
+                <svg width="170" height="170">
+                    <line x1="10" y1="155" x2="160" y2="155" stroke="#334155" stroke-width="3" stroke-dasharray="2"/>
+
+                    <rect x="40" y="30" width="16" height="125" fill="none" stroke="#64748b" stroke-width="2"/>
+                    <line x1="40" y1="50" x2="56" y2="75" stroke="#475569" stroke-width="1.2"/>
+                    <line x1="56" y1="50" x2="40" y2="75" stroke="#475569" stroke-width="1.2"/>
+                    <line x1="40" y1="100" x2="56" y2="125" stroke="#475569" stroke-width="1.2"/>
+                    <line x1="56" y1="100" x2="40" y2="125" stroke="#475569" stroke-width="1.2"/>
+
+                    <rect x="20" y="20" width="140" height="10" fill="url(#metal3D)" stroke="var(--crane-yellow)" stroke-width="1"/>
+                    
+                    <g id="carroComponentePerfil" transform="translate(110, 0)">
+                        <rect x="-8" y="27" width="16" height="7" fill="#ffffff" rx="1" stroke="#000000" stroke-width="1"/>
+                        <line id="cablePerfil" x1="0" y1="34" x2="0" y2="75" stroke="#e2e8f0" stroke-width="1.2"/>
+                        
+                        <g id="ganchoPerfil" transform="translate(0, 0)">
+                            <rect x="-4" y="75" width="8" height="10" fill="var(--crane-yellow)" rx="1"/>
+                            <path d="M 0 85 Q -5 90 0 94 Q 4 90 2 87" fill="none" stroke="var(--crane-yellow)" stroke-width="2"/>
+                        </g>
+                    </g>
+                </svg>
+            </div>
+        </div>
+
+        <div class="joysticks-container">
+            <div class="joystick-card">
+                <div class="joystick-label">MANDO CARRO / GIRO</div>
+                <div class="joystick-base-circular">
+                    <span class="guide guide-up">▲</span>
+                    <span class="guide guide-down">▼</span>
+                    <span class="guide guide-left">◀</span>
+                    <span class="guide guide-right">▶</span>
+                    <div class="joystick-knob" id="joyIzquierdo"></div>
                 </div>
             </div>
 
-            <div class="control-group">
-                <h3 class="group-title">Elevación</h3>
-                <div class="vertical-controls">
-                    <div class="btn" data-cmd="U">Subir<span>⇡</span></div>
-                    <div class="btn" data-cmd="D">Bajar<span>⇣</span></div>
+            <div class="joystick-card">
+                <div class="joystick-label">GANCHO DE CARGA</div>
+                <div class="joystick-base-linear">
+                    <span class="guide guide-up">▲</span>
+                    <span class="guide guide-down">▼</span>
+                    <div class="joystick-knob" id="joyGancho"></div>
                 </div>
             </div>
         </div>
-        
-        <div class="btn btn-stop" data-cmd="S">PARADA DE EMERGENCIA</div>
-        <div class="btn" id="telemetry-btn" style="margin-top:10px; max-width:260px; font-size: 14px; height: 50px; background: rgba(11, 22, 30, 0.6);">VER TELEMETRÍA</div>
-    </div>
 
-    <div id="telemetry-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:9999; align-items:center; justify-content:center;">
-        <div style="background:#071018; color:var(--text); width:90%; max-width:800px; max-height:80%; overflow:auto; border-radius:12px; padding:20px; box-shadow:0 10px 30px rgba(0,0,0,0.7); border:1px solid rgba(187,237,36,0.08);">
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px;">
-                <h3 style="margin:0; font-family:'MedievalSharp', cursive; color:var(--primary); font-size:22px;">Historial de Telemetría</h3>
-                <button id="telemetry-close" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text); padding:6px 14px; border-radius:8px; cursor:pointer;">Cerrar</button>
-            </div>
-            <div style="margin-top:15px; font-family:monospace; font-size:13px;">
-                <table id="telemetry-table" style="width:100%; border-collapse:collapse;">
-                    <thead>
-                        <tr style="text-align:left; color:var(--text-muted); border-bottom: 2px solid rgba(187,237,36,0.2);"><th style="padding:8px; width:140px;">Timestamp</th><th style="padding:8px; width:120px;">Evento</th><th style="padding:8px;">Detalles</th></tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
+        <div class="emergency-container">
+            <button class="btn-estop" id="btnEStop">PARADA DE EMERGENCIA</button>
         </div>
+
+        <div class="hazard-lines bottom"></div>
     </div>
 
     <script>
-        document.addEventListener('contextmenu', event => event.preventDefault());
-        let activeCommand = null;
+        let anguloGiro = 0;
+        let posicionCarro = 110; 
+        let posicionGancho = 0;  
+        let loopAnimacion = null;
+        let comandoActivo = "S";
 
-        const sendCommand = (cmd) => {
-            fetch(`/api/command?cmd=${cmd}`)
-                .catch(err => console.error('Fetch error:', err));
-        };
+        const plumaGiro = document.getElementById('plumaGiro');
+        const carroPlanta = document.getElementById('carroPlanta');
+        const carroComponentePerfil = document.getElementById('carroComponentePerfil');
+        const cablePerfil = document.getElementById('cablePerfil');
+        const ganchoPerfil = document.getElementById('ganchoPerfil');
 
-        const startAction = (e) => {
-            e.preventDefault(); 
-            const btn = e.target.closest('.btn');
-            if (!btn || btn.id === 'telemetry-btn' || btn.id === 'telemetry-close') return;
+        const rangoMaximo = 30; // Desplazamiento máximo en px
 
-            const cmd = btn.getAttribute('data-cmd');
-            if (cmd && activeCommand !== cmd) {
-                btn.classList.add('active');
-                activeCommand = cmd;
-                sendCommand(cmd);
-            }
-        };
-
-        const stopAction = (e) => {
-            e.preventDefault();
-            const btn = e.target.closest('.btn');
-            if (btn && btn.id !== 'telemetry-btn') btn.classList.remove('active');
-            if (activeCommand !== null) {
-                activeCommand = null;
-                sendCommand('S');
-            }
-        };
-
-        const buttons = document.querySelectorAll('.btn');
-        buttons.forEach(btn => {
-            if(btn.id !== 'telemetry-btn') {
-                btn.addEventListener('touchstart', startAction, {passive: false});
-                btn.addEventListener('touchend', stopAction, {passive: false});
-                btn.addEventListener('touchcancel', stopAction, {passive: false});
-                btn.addEventListener('mousedown', startAction);
-                btn.addEventListener('mouseup', stopAction);
-                btn.addEventListener('mouseleave', stopAction);
+        // --- INTERFAZ 1: JOYSTICK IZQUIERDO CIRCULAR (360 GRADOS) ---
+        configurarJoystickCircular(document.getElementById('joyIzquierdo'), (dx, dy, dist) => {
+            if (dist <= 8) return "S"; // Filtro de holgura
+            if (Math.abs(dx) > Math.abs(dy)) {
+                return dx > 0 ? "R" : "L"; // Giro Horario (Derecha) o Antihorario (Izquierda)
+            } else {
+                return dy > 0 ? "B" : "F"; // Carro Atrás (Abajo) o Adelante (Arriba)
             }
         });
 
-        document.addEventListener('mouseup', () => {
-            if (activeCommand !== null) { activeCommand = null; sendCommand('S'); }
+        // --- INTERFAZ 2: JOYSTICK DERECHO LINEAL RECTILÍNEO (SÓLO ARRIBA/ABAJO) ---
+        configurarJoystickLineal(document.getElementById('joyGancho'), (dy) => {
+            if (Math.abs(dy) <= 8) return "S";
+            return dy > 0 ? "D" : "U"; // Bajar Gancho (Abajo) o Subir Gancho (Arriba)
         });
 
-        // Cargar registros en la tabla
-        document.getElementById('telemetry-btn').addEventListener('click', async () => {
-            const modal = document.getElementById('telemetry-modal');
-            const tbody = document.querySelector('#telemetry-table tbody');
-            tbody.innerHTML = '<tr><td colspan="3" style="padding:12px; color:var(--text-muted)">Cargando registros...</td></tr>';
-            modal.style.display = 'flex';
-            
-            try {
-                const res = await fetch('/api/telemetry');
-                const text = await res.text();
-                const lines = text.split('\n').filter(l => l.trim().length > 0);
-                tbody.innerHTML = '';
-                
-                for (let i = lines.length - 1; i >= 0; i--) {
-                    try {
-                        const obj = JSON.parse(lines[i]);
-                        const ts = obj.ts ? Number(obj.ts).toFixed(1) + "s" : '';
-                        const ev = obj.event || '';
-                        const det = obj.details ? JSON.stringify(obj.details) : '';
-                        const tr = document.createElement('tr');
-                        tr.style.borderBottom = "1px solid rgba(255,255,255,0.05)";
-                        tr.innerHTML = `<td style="padding:8px; color:var(--primary);">${ts}</td><td style="padding:8px; font-weight:bold;">${ev}</td><td style="padding:8px; color:var(--text-muted);">${det}</td>`;
-                        tbody.appendChild(tr);
-                    } catch (e) { }
+        // Lógica de operación omnidireccional para el carro y giros
+        function configurarJoystickCircular(elemento, calcularComando) {
+            let startX = 0, startY = 0;
+            let comandoAnterior = "S";
+
+            const presionar = (e) => {
+                const touch = e.touches ? e.touches[0] : e;
+                startX = touch.clientX;
+                startY = touch.clientY;
+                document.addEventListener('touchmove', mover, { passive: false });
+                document.addEventListener('touchend', soltar);
+                document.addEventListener('mousemove', mover);
+                document.addEventListener('mouseup', soltar);
+                if (!loopAnimacion) loopAnimacion = setInterval(refrescarMonitor, 30);
+            };
+
+            const mover = (e) => {
+                if (e.cancelable) e.preventDefault();
+                const touch = e.touches ? e.touches[0] : e;
+                let dx = touch.clientX - startX;
+                let dy = touch.clientY - startY;
+
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist > rangoMaximo) {
+                    dx = (dx / dist) * rangoMaximo;
+                    dy = (dy / dist) * rangoMaximo;
                 }
-                if (lines.length === 0) tbody.innerHTML = '<tr><td colspan="3" style="padding:12px; color:var(--text-muted)">No hay eventos.</td></tr>';
-            } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="3" style="padding:12px; color:var(--danger)">Error: ${err}</td></tr>`;
-            }
-        });
 
-        document.getElementById('telemetry-close').addEventListener('click', () => {
-            document.getElementById('telemetry-modal').style.display = 'none';
+                elemento.style.transform = `translate(${dx}px, ${dy}px)`;
+
+                let nuevoCmd = calcularComando(dx, dy, dist);
+                if (nuevoCmd !== comandoAnterior) {
+                    comandoAnterior = nuevoCmd;
+                    despacharComando(nuevoCmd);
+                }
+            };
+
+            const soltar = () => {
+                elemento.style.transform = 'translate(0px, 0px)';
+                removerEventos(mover, soltar);
+                finalizarComando();
+            };
+
+            elemento.addEventListener('touchstart', presionar);
+            elemento.addEventListener('mousedown', presionar);
+        }
+
+        // Lógica de operación restringida a carril vertical (Gancho)
+        function configurarJoystickLineal(elemento, calcularComando) {
+            let startY = 0;
+            let comandoAnterior = "S";
+
+            const presionar = (e) => {
+                const touch = e.touches ? e.touches[0] : e;
+                startY = touch.clientY;
+                document.addEventListener('touchmove', mover, { passive: false });
+                document.addEventListener('touchend', soltar);
+                document.addEventListener('mousemove', mover);
+                document.addEventListener('mouseup', soltar);
+                if (!loopAnimacion) loopAnimacion = setInterval(refrescarMonitor, 30);
+            };
+
+            const mover = (e) => {
+                if (e.cancelable) e.preventDefault();
+                const touch = e.touches ? e.touches[0] : e;
+                let dy = touch.clientY - startY;
+
+                if (dy > rangoMaximo) dy = rangoMaximo;
+                if (dy < -rangoMaximo) dy = -rangoMaximo;
+
+                elemento.style.transform = `translateY(${dy}px)`;
+
+                let nuevoCmd = calcularComando(dy);
+                if (nuevoCmd !== comandoAnterior) {
+                    comandoAnterior = nuevoCmd;
+                    despacharComando(nuevoCmd);
+                }
+            };
+
+            const soltar = () => {
+                elemento.style.transform = 'translateY(0px)';
+                removerEventos(mover, soltar);
+                finalizarComando();
+            };
+
+            elemento.addEventListener('touchstart', presionar);
+            elemento.addEventListener('mousedown', presionar);
+        }
+
+        function removerEventos(mover, soltar) {
+            document.removeEventListener('touchmove', mover);
+            document.removeEventListener('touchend', soltar);
+            document.removeEventListener('mousemove', mover);
+            document.removeEventListener('mouseup', soltar);
+        }
+
+        function finalizarComando() {
+            despacharComando("S");
+            clearInterval(loopAnimacion);
+            loopAnimacion = null;
+        }
+
+        // --- SISTEMA DE COMUNICACIÓN CON ESP32 ---
+        function despacharComando(cmd) {
+            comandoActivo = cmd;
+            fetch('/api/command?cmd=' + cmd).catch(() => console.log("ESP32 Interconectado"));
+            if (navigator.vibrate) navigator.vibrate(12);
+        }
+
+        // --- RENDERIZADO DEL GEMELO DIGITAL ---
+        function refrescarMonitor() {
+            if (comandoActivo === 'L') anguloGiro -= 1.8;
+            if (comandoActivo === 'R') anguloGiro += 1.8;
+            
+            if (comandoActivo === 'F' && posicionCarro < 150) posicionCarro += 1.0;
+            if (comandoActivo === 'B' && posicionCarro > 65) posicionCarro -= 1.0; 
+            
+            if (comandoActivo === 'U' && posicionGancho > 0) posicionGancho -= 1.0;
+            if (comandoActivo === 'D' && posicionGancho < 65) posicionGancho += 1.0;
+
+            // Actualización de vectores SVG
+            plumaGiro.setAttribute('transform', `rotate(${anguloGiro} 85 85)`);
+            carroPlanta.setAttribute('x', posicionCarro);
+            carroComponentePerfil.setAttribute('transform', `translate(${posicionCarro}, 0)`);
+            
+            cablePerfil.setAttribute('y2', 34 + 41 + posicionGancho);
+            ganchoPerfil.setAttribute('transform', `translate(0, ${posicionGancho})`);
+        }
+
+        // Parada de Emergencia General Física
+        document.getElementById('btnEStop').addEventListener('click', () => {
+            despacharComando('S');
+            document.getElementById('joyIzquierdo').style.transform = 'translate(0px, 0px)';
+            document.getElementById('joyGancho').style.transform = 'translateY(0px)';
+            clearInterval(loopAnimacion);
+            loopAnimacion = null;
         });
     </script>
 </body>
