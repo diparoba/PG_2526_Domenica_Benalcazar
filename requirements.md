@@ -1,55 +1,64 @@
-# Proyecto Grúa Torre: Requerimientos Técnicos para Generación de Código (v2)
+﻿# Proyecto Grúa Torre: Requerimientos Técnicos
 
 ## Contexto del Proyecto
-Este documento está optimizado para su procesamiento por agentes de IA en Antigravity o Codex. El objetivo es generar el firmware para una grúa torre con control dual (Manual vía Joysticks y Remoto vía Web) utilizando comunicación serial entre un ESP32 y un Arduino Nano.
+Este proyecto implementa un sistema de control dual para una grúa torre a escala. El Arduino Nano lee joysticks locales y comandos remotos, mezcla ambas intenciones y controla dos motores DC y un motor paso a paso. El ESP32 sirve una interfaz web táctil y transmite los comandos al Arduino por UART.
 
 ## 1. Arquitectura de Hardware y Pines
 
-### Controlador A: Arduino Nano (Actuador Principal)
+### Arduino Nano (Actuador Principal)
 - **Framework**: Arduino / C++
-- **Responsabilidad**: Controlar motores y leer entradas analógicas. Escuchar comandos Serial desde ESP32.
+- **Responsabilidad**: Leer joysticks, interpretar comandos UART y manejar los drivers de potencia.
 - **Asignación de Pines**:
-  - **Joysticks**: X (Carro) -> A0, Y (Elevación) -> A1, Giro -> A2.
-  - **Driver TB6612FNG (Motores DC N20)**:
-    - Motor A (Carro): AIN1(D2), AIN2(D4), PWMA(D3).
-    - Motor B (Elevación): BIN1(D7), BIN2(D8), PWMB(D5).
-    - STBY -> VCC (5V).
-  - **Driver DRV8825 (Motor a Pasos Nema 17)**:
-    - STEP -> D9, DIR -> D10.
-  - **Comunicación**: RX(D0) desde el TX del ESP32.
+  - **Joysticks**:
+    - Carro (X) -> A0
+    - Elevación (Y) -> A1
+    - Giro (Z) -> A2
+  - **Driver TB6612FNG (Motores DC)**:
+    - Motor A (Carro): AIN1 = D2, AIN2 = D4, PWMA = D3
+    - Motor B (Elevación): BIN1 = D7, BIN2 = D8, PWMB = D5
+  - **Driver DRV8825 (Stepper para giro)**:
+    - STEP = D9
+    - DIR = D10
+  - **Comunicación Serial**:
+    - RX del Nano = conexión desde TX del ESP32
 
-### Controlador B: ESP32 DevKit V1 (Interfaz Web)
-- **Framework**: MicroPython (Thonny IDE)
-- **Responsabilidad**: Levantar un servidor web asíncrono, gestionar conexión WiFi y enviar comandos UART.
+### ESP32 (Interfaz Web / Control de Red)
+- **Framework**: MicroPython
+- **Responsabilidad**: Servir la página web, recibir comandos del navegador y enviarlos por UART al Arduino.
 - **Asignación de Pines**:
-  - **UART TX**: GPIO 17 (Conectado a RX del Nano).
-  - **LED Status**: GPIO 2.
+  - UART TX = GPIO 17 (hacia RX del Nano)
+  - UART RX = GPIO 16 (si se usa enlace bidireccional)
+  - LED de estado = GPIO 2
 
-## 2. Requerimientos de Software (Backlog para Agente)
+## 2. Funcionalidad de Software
 
-### Tarea 1: Firmware Arduino (main.ino)
-- **Lógica de Control Mixto**: Crear una función que sume la intención del Joystick y la intención de la Web.
-- **Protocolo Serial**: Implementar un parser simple para comandos UART (Ej: 'F'=Adelante, 'B'=Atrás, 'U'=Subir, 'D'=Bajar, 'L'=Giro Izq, 'R'=Giro Der, 'S'=Stop).
-- **Control de Velocidad**: Utilizar PWM para los motores N20.
-- **Control Stepper**: Implementar movimiento suave para el Nema 17 usando la librería AccelStepper o lógica de retardos no bloqueante.
+### Firmware Arduino (`grua_arduino/grua_arduino.ino`)
+- Lee los tres ejes del joystick analógico.
+- Controla dos motores DC con PWM y un motor paso a paso con `AccelStepper`.
+- Recibe comandos seriales de una sola letra desde el ESP32: `F`, `B`, `U`, `D`, `L`, `R`, `S`.
+- Mantiene una intención web separada y suma la intención del joystick a la intención remota.
+- Implementa un timeout de seguridad de 500 ms que reinicia las intenciones web si no llegan comandos nuevos.
 
-### Tarea 2: Firmware ESP32 (boot.py y main.py)
-- **Conexión WiFi**: Implementar función robusta de conexión a SSID/Password.
-- **Servidor Web**:
-  - Endpoint `/` que entregue un HTML con botones (Adelante, Atrás, Izquierda, Derecha, Subir, Bajar, Parar).
-  - Uso de JavaScript (Fetch API) en el cliente para enviar peticiones al servidor sin recargar la página.
-- **Transmisión UART**: Al recibir una petición web, enviar el carácter correspondiente por el puerto serial a 9600 baudios.
+### Firmware ESP32 (`esp32_server`)
+- `boot.py`: menú de arranque interactivo, conectividad WiFi y modo REPL.
+- `main.py`: servidor AP/híbrido con lectura de controles físicos de respaldo y manejo de comandos web.
+- `telemetry.py`: servidor web asíncrono que expone `/`, `/api/command?cmd=` y `/api/telemetry`.
+- `index.html`: interfaz de control remota con dos joysticks táctiles y botón de parada de emergencia.
 
-### Tarea 3: Interfaz Web (HTML/CSS)
-- Diseño minimalista tipo "Control Remoto".
-- Botones grandes y responsivos para uso en móvil.
+## 3. Requisitos Clave
+- **Comunicación UART**: 9600 bps, 8N1.
+- **Comandos válidos**: `F`, `B`, `U`, `D`, `L`, `R`, `S`.
+- **Seguridad**: Si no se recibe un comando web en 500 ms, el Arduino debe regresar a `S`.
+- **Interfaz Web**: Control táctil, visualización minimalista y soporte para dispositivos móviles.
 
-## 3. Instrucciones de Generación para Codex/Antigravity
-- **Archivo 1**: Generar `grua_arduino.ino` integrando el driver TB6612FNG y AccelStepper.
-- **Archivo 2**: Generar `boot.py` para la configuración de red en MicroPython.
-- **Archivo 3**: Generar `main.py` con el servidor web (`uasyncio`) y la lógica de envío serial.
-- **Archivo 4**: Generar `index.html` integrado como string dentro de `main.py` o como archivo independiente si el agente lo prefiere.
+## 4. Resultados Esperados
+- El Arduino debe poder mover el carro, subir/bajar el gancho y girar la pluma.
+- El ESP32 debe servir la página remota y transmitir comandos válidos por UART.
+- El sistema debe soportar control local por joystick y control remoto por navegador.
 
-## 4. Consideraciones Técnicas
-- **Baudrate**: Configurar ambos dispositivos a 9600 bps.
-- **Seguridad**: Los comandos web deben tener un "timeout" de seguridad; si no se recibe un comando de movimiento continuo, los motores deben detenerse.
+## 5. Archivos Principales
+- `grua_arduino/grua_arduino.ino`
+- `esp32_server/boot.py`
+- `esp32_server/main.py`
+- `esp32_server/telemetry.py`
+- `esp32_server/index.html`

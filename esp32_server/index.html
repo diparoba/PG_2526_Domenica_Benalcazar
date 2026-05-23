@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Estación de Control de Grúa Torre</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --crane-yellow: #facc15; /* Amarillo de maquinaria pesada */
@@ -72,6 +73,11 @@
             text-align: center;
             text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
+
+        /* TELEMETRIA AGREGADA */
+        .telemetry-container { display: flex; justify-content: space-between; gap: 5px; margin-bottom: 15px; }
+        .telemetry-item { width: 32%; font-size: 0.6rem; color: #cbd5e1; text-align: center; }
+        canvas { background: #000; border-radius: 4px; width: 100% !important; height: 50px !important; }
 
         /* DASHBOARD DEL GEMELO DIGITAL */
         .monitor-dashboard {
@@ -185,10 +191,7 @@
             box-shadow: 0 0 6px var(--danger-red);
         }
 
-        /* Posición central por defecto para el control lineal */
-        #joyGancho {
-            top: 30px;
-        }
+        #joyGancho { top: 30px; }
 
         /* INDICADORES VISUALES DE DIRECCIÓN (FLECHAS) */
         .guide {
@@ -238,6 +241,12 @@
 
         <h2>SISTEMA DE CONTROL DE GRÚA INDUSTRIAL</h2>
 
+        <div class="telemetry-container">
+            <div class="telemetry-item">GIRO<canvas id="chartGiro"></canvas></div>
+            <div class="telemetry-item">CARRO<canvas id="chartCarro"></canvas></div>
+            <div class="telemetry-item">GANCHO<canvas id="chartGancho"></canvas></div>
+        </div>
+
         <div class="monitor-dashboard">
             <div class="view-container">
                 <span>VISTA PLANTA (GIRO)</span><br>
@@ -249,26 +258,21 @@
                             <stop offset="100%" stop-color="#1e293b"/>
                         </linearGradient>
                     </defs>
-
                     <circle cx="85" cy="85" r="75" stroke="#162e49" stroke-width="1" fill="none" stroke-dasharray="3"/>
                     <circle cx="85" cy="85" r="45" stroke="#162e49" stroke-width="1" fill="none" stroke-dasharray="3"/>
-                    
                     <rect x="50" y="50" width="70" height="70" rx="10" fill="none" stroke="#224469" stroke-width="2"/>
                     <circle cx="56" cy="56" r="2.5" fill="#1e293b" stroke="#475569" stroke-width="0.8"/>
                     <circle cx="114" cy="56" r="2.5" fill="#1e293b" stroke="#475569" stroke-width="0.8"/>
                     <circle cx="56" cy="114" r="2.5" fill="#1e293b" stroke="#475569" stroke-width="0.8"/>
                     <circle cx="114" cy="114" r="2.5" fill="#1e293b" stroke="#475569" stroke-width="0.8"/>
-                    
                     <rect x="73" y="71" width="24" height="28" fill="none" stroke="var(--crane-yellow)" stroke-width="1.5"/>
                     <circle cx="85" cy="85" r="7" fill="url(#metal3D)"/>
-
                     <g id="plumaGiro" transform="rotate(0 85 85)">
                         <rect x="40" y="81" width="45" height="8" fill="#334155" rx="1"/>
                         <rect x="85" y="80" width="78" height="10" fill="none" stroke="var(--crane-yellow)" stroke-width="2" rx="1"/>
                         <line x1="100" y1="80" x2="110" y2="90" stroke="var(--crane-yellow)" stroke-width="1"/>
                         <line x1="120" y1="80" x2="130" y2="90" stroke="var(--crane-yellow)" stroke-width="1"/>
                         <line x1="140" y1="80" x2="150" y2="90" stroke="var(--crane-yellow)" stroke-width="1"/>
-                        
                         <rect id="carroPlanta" x="110" y="77" width="16" height="16" fill="#ffffff" rx="2" stroke="#000000" stroke-width="1"/>
                     </g>
                 </svg>
@@ -278,19 +282,15 @@
                 <span>VISTA PERFIL (GANCHO)</span><br>
                 <svg width="170" height="170">
                     <line x1="10" y1="155" x2="160" y2="155" stroke="#334155" stroke-width="3" stroke-dasharray="2"/>
-
                     <rect x="40" y="30" width="16" height="125" fill="none" stroke="#64748b" stroke-width="2"/>
                     <line x1="40" y1="50" x2="56" y2="75" stroke="#475569" stroke-width="1.2"/>
                     <line x1="56" y1="50" x2="40" y2="75" stroke="#475569" stroke-width="1.2"/>
                     <line x1="40" y1="100" x2="56" y2="125" stroke="#475569" stroke-width="1.2"/>
                     <line x1="56" y1="100" x2="40" y2="125" stroke="#475569" stroke-width="1.2"/>
-
                     <rect x="20" y="20" width="140" height="10" fill="url(#metal3D)" stroke="var(--crane-yellow)" stroke-width="1"/>
-                    
                     <g id="carroComponentePerfil" transform="translate(110, 0)">
                         <rect x="-8" y="27" width="16" height="7" fill="#ffffff" rx="1" stroke="#000000" stroke-width="1"/>
                         <line id="cablePerfil" x1="0" y1="34" x2="0" y2="75" stroke="#e2e8f0" stroke-width="1.2"/>
-                        
                         <g id="ganchoPerfil" transform="translate(0, 0)">
                             <rect x="-4" y="75" width="8" height="10" fill="var(--crane-yellow)" rx="1"/>
                             <path d="M 0 85 Q -5 90 0 94 Q 4 90 2 87" fill="none" stroke="var(--crane-yellow)" stroke-width="2"/>
@@ -330,6 +330,15 @@
     </div>
 
     <script>
+        // LOGICA DE TELEMETRIA
+        const chartCfg = { type: 'line', data: { labels: Array(15).fill(''), datasets: [{ data: Array(15).fill(0), borderColor: '#facc15', borderWidth: 2, pointRadius: 0, fill: false }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false } } } };
+        const gGiro = new Chart(document.getElementById('chartGiro'), JSON.parse(JSON.stringify(chartCfg)));
+        const gCarro = new Chart(document.getElementById('chartCarro'), JSON.parse(JSON.stringify(chartCfg)));
+        const gGancho = new Chart(document.getElementById('chartGancho'), JSON.parse(JSON.stringify(chartCfg)));
+
+        function addData(chart, val) { chart.data.datasets[0].data.push(val); chart.data.datasets[0].data.shift(); chart.update('none'); }
+
+        // LOGICA ORIGINAL
         let anguloGiro = 0;
         let posicionCarro = 110; 
         let posicionGancho = 0;  
@@ -342,76 +351,47 @@
         const cablePerfil = document.getElementById('cablePerfil');
         const ganchoPerfil = document.getElementById('ganchoPerfil');
 
-        const rangoMaximo = 30; // Desplazamiento máximo en px
+        const rangoMaximo = 30;
 
-        // --- INTERFAZ 1: JOYSTICK IZQUIERDO CIRCULAR (360 GRADOS) ---
         configurarJoystickCircular(document.getElementById('joyIzquierdo'), (dx, dy, dist) => {
-            if (dist <= 8) return "S"; // Filtro de holgura
-            if (Math.abs(dx) > Math.abs(dy)) {
-                return dx > 0 ? "R" : "L"; // Giro Horario (Derecha) o Antihorario (Izquierda)
-            } else {
-                return dy > 0 ? "B" : "F"; // Carro Atrás (Abajo) o Adelante (Arriba)
-            }
+            if (dist <= 8) return "S";
+            if (Math.abs(dx) > Math.abs(dy)) return dx > 0 ? "R" : "L";
+            return dy > 0 ? "B" : "F";
         });
 
-        // --- INTERFAZ 2: JOYSTICK DERECHO LINEAL RECTILÍNEO (SÓLO ARRIBA/ABAJO) ---
         configurarJoystickLineal(document.getElementById('joyGancho'), (dy) => {
             if (Math.abs(dy) <= 8) return "S";
-            return dy > 0 ? "D" : "U"; // Bajar Gancho (Abajo) o Subir Gancho (Arriba)
+            return dy > 0 ? "D" : "U";
         });
 
-        // Lógica de operación omnidireccional para el carro y giros
         function configurarJoystickCircular(elemento, calcularComando) {
             let startX = 0, startY = 0;
             let comandoAnterior = "S";
-
             const presionar = (e) => {
                 const touch = e.touches ? e.touches[0] : e;
-                startX = touch.clientX;
-                startY = touch.clientY;
+                startX = touch.clientX; startY = touch.clientY;
                 document.addEventListener('touchmove', mover, { passive: false });
                 document.addEventListener('touchend', soltar);
                 document.addEventListener('mousemove', mover);
                 document.addEventListener('mouseup', soltar);
                 if (!loopAnimacion) loopAnimacion = setInterval(refrescarMonitor, 30);
             };
-
             const mover = (e) => {
                 if (e.cancelable) e.preventDefault();
                 const touch = e.touches ? e.touches[0] : e;
-                let dx = touch.clientX - startX;
-                let dy = touch.clientY - startY;
-
+                let dx = touch.clientX - startX; let dy = touch.clientY - startY;
                 const dist = Math.sqrt(dx*dx + dy*dy);
-                if (dist > rangoMaximo) {
-                    dx = (dx / dist) * rangoMaximo;
-                    dy = (dy / dist) * rangoMaximo;
-                }
-
+                if (dist > rangoMaximo) { dx = (dx / dist) * rangoMaximo; dy = (dy / dist) * rangoMaximo; }
                 elemento.style.transform = `translate(${dx}px, ${dy}px)`;
-
                 let nuevoCmd = calcularComando(dx, dy, dist);
-                if (nuevoCmd !== comandoAnterior) {
-                    comandoAnterior = nuevoCmd;
-                    despacharComando(nuevoCmd);
-                }
+                if (nuevoCmd !== comandoAnterior) { comandoAnterior = nuevoCmd; despacharComando(nuevoCmd); }
             };
-
-            const soltar = () => {
-                elemento.style.transform = 'translate(0px, 0px)';
-                removerEventos(mover, soltar);
-                finalizarComando();
-            };
-
-            elemento.addEventListener('touchstart', presionar);
-            elemento.addEventListener('mousedown', presionar);
+            const soltar = () => { elemento.style.transform = 'translate(0px, 0px)'; removerEventos(mover, soltar); finalizarComando(); };
+            elemento.addEventListener('touchstart', presionar); elemento.addEventListener('mousedown', presionar);
         }
 
-        // Lógica de operación restringida a carril vertical (Gancho)
         function configurarJoystickLineal(elemento, calcularComando) {
-            let startY = 0;
-            let comandoAnterior = "S";
-
+            let startY = 0; let comandoAnterior = "S";
             const presionar = (e) => {
                 const touch = e.touches ? e.touches[0] : e;
                 startY = touch.clientY;
@@ -421,75 +401,43 @@
                 document.addEventListener('mouseup', soltar);
                 if (!loopAnimacion) loopAnimacion = setInterval(refrescarMonitor, 30);
             };
-
             const mover = (e) => {
                 if (e.cancelable) e.preventDefault();
                 const touch = e.touches ? e.touches[0] : e;
                 let dy = touch.clientY - startY;
-
-                if (dy > rangoMaximo) dy = rangoMaximo;
-                if (dy < -rangoMaximo) dy = -rangoMaximo;
-
+                if (dy > rangoMaximo) dy = rangoMaximo; if (dy < -rangoMaximo) dy = -rangoMaximo;
                 elemento.style.transform = `translateY(${dy}px)`;
-
                 let nuevoCmd = calcularComando(dy);
-                if (nuevoCmd !== comandoAnterior) {
-                    comandoAnterior = nuevoCmd;
-                    despacharComando(nuevoCmd);
-                }
+                if (nuevoCmd !== comandoAnterior) { comandoAnterior = nuevoCmd; despacharComando(nuevoCmd); }
             };
-
-            const soltar = () => {
-                elemento.style.transform = 'translateY(0px)';
-                removerEventos(mover, soltar);
-                finalizarComando();
-            };
-
-            elemento.addEventListener('touchstart', presionar);
-            elemento.addEventListener('mousedown', presionar);
+            const soltar = () => { elemento.style.transform = 'translateY(0px)'; removerEventos(mover, soltar); finalizarComando(); };
+            elemento.addEventListener('touchstart', presionar); elemento.addEventListener('mousedown', presionar);
         }
 
-        function removerEventos(mover, soltar) {
-            document.removeEventListener('touchmove', mover);
-            document.removeEventListener('touchend', soltar);
-            document.removeEventListener('mousemove', mover);
-            document.removeEventListener('mouseup', soltar);
-        }
+        function removerEventos(mover, soltar) { document.removeEventListener('touchmove', mover); document.removeEventListener('touchend', soltar); document.removeEventListener('mousemove', mover); document.removeEventListener('mouseup', soltar); }
+        function finalizarComando() { despacharComando("S"); clearInterval(loopAnimacion); loopAnimacion = null; }
+        function despacharComando(cmd) { comandoActivo = cmd; fetch('/api/command?cmd=' + cmd).catch(() => {}); if (navigator.vibrate) navigator.vibrate(12); }
 
-        function finalizarComando() {
-            despacharComando("S");
-            clearInterval(loopAnimacion);
-            loopAnimacion = null;
-        }
-
-        // --- SISTEMA DE COMUNICACIÓN CON ESP32 ---
-        function despacharComando(cmd) {
-            comandoActivo = cmd;
-            fetch('/api/command?cmd=' + cmd).catch(() => console.log("ESP32 Interconectado"));
-            if (navigator.vibrate) navigator.vibrate(12);
-        }
-
-        // --- RENDERIZADO DEL GEMELO DIGITAL ---
         function refrescarMonitor() {
             if (comandoActivo === 'L') anguloGiro -= 1.8;
             if (comandoActivo === 'R') anguloGiro += 1.8;
-            
             if (comandoActivo === 'F' && posicionCarro < 150) posicionCarro += 1.0;
             if (comandoActivo === 'B' && posicionCarro > 65) posicionCarro -= 1.0; 
-            
             if (comandoActivo === 'U' && posicionGancho > 0) posicionGancho -= 1.0;
             if (comandoActivo === 'D' && posicionGancho < 65) posicionGancho += 1.0;
 
-            // Actualización de vectores SVG
+            // Lógica de telemetría inyectada
+            addData(gGiro, anguloGiro);
+            addData(gCarro, posicionCarro);
+            addData(gGancho, posicionGancho);
+
             plumaGiro.setAttribute('transform', `rotate(${anguloGiro} 85 85)`);
             carroPlanta.setAttribute('x', posicionCarro);
             carroComponentePerfil.setAttribute('transform', `translate(${posicionCarro}, 0)`);
-            
             cablePerfil.setAttribute('y2', 34 + 41 + posicionGancho);
             ganchoPerfil.setAttribute('transform', `translate(0, ${posicionGancho})`);
         }
 
-        // Parada de Emergencia General Física
         document.getElementById('btnEStop').addEventListener('click', () => {
             despacharComando('S');
             document.getElementById('joyIzquierdo').style.transform = 'translate(0px, 0px)';

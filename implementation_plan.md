@@ -1,79 +1,52 @@
-# Plan de Implementación de Grúa Torre (Arduino Nano + ESP32)
+﻿# Plan de Implementación de Grúa Torre (Arduino Nano + ESP32)
 
-Este documento detalla la arquitectura, el diseño y la implementación del sistema de control dual (manual y web) para una grúa torre, basado en los requerimientos técnicos proporcionados (v2).
+Este documento describe la implementación real del sistema de control dual para la grúa torre, usando los archivos presentes en el repositorio.
+
+## Arquitectura General
+- **Arduino Nano** ejecuta `grua_arduino/grua_arduino.ino`.
+- **ESP32** ejecuta `esp32_server/boot.py` y `esp32_server/main.py` o `esp32_server/telemetry.py` según la versión.
+- **Interfaz Web**: `esp32_server/index.html`.
 
 ## Requisitos del Proyecto
-1. **Control de Motores**: 
-   - Eje de rotación (Giro): Motor a pasos Nema 17 con driver DRV8825. (Movimiento suave con `AccelStepper`).
-   - Eje Carro (Adelante/Atrás): Motor DC con driver TB6612FNG (Motor A).
-   - Eje Elevación (Subir/Bajar): Motor DC con driver TB6612FNG (Motor B).
-2. **Control Dual**: Joysticks (Manual) y Web (Remoto). Lógica mixta: se sumará la intención del joystick con la intención web.
-3. **Microcontroladores**: Arduino Nano (Hardware/Motores) y ESP32 en MicroPython (Servidor Web).
-4. **Documentación**: Estándar OpenSpec documentando la lógica de control, mensajería UART y endpoints web.
-5. **Seguridad**: Timeout para comandos web (detención si no se recibe un comando continuo).
+1. Control de dos motores DC con TB6612FNG y un motor paso a paso con DRV8825.
+2. Control dual local-remoto: joysticks analógicos + navegador web.
+3. Comunicación UART a 9600 bps entre ESP32 y Arduino.
+4. Interfaz web táctil para enviar comandos remotos.
+5. Seguridad: timeout de comando web y parada de emergencia.
 
-## Open Questions
-- El diseño web pide "Diseño minimalista tipo Control Remoto", pero también instrucciones globales de usar diseño muy moderno (Glassmorphism, animaciones). Integraré un diseño de "Control Remoto" que sea premium, responsivo y estético.
-- ¿Hay algún SSID y Password por defecto que desees en `boot.py` o los dejo genéricos (ej. `SSID="WIFI_GRUA"`, `PASS="12345678"`)? *Por defecto usaré datos genéricos que podrás modificar.*
+## Estado Actual
+- `grua_arduino/grua_arduino.ino` está implementado y controla el hardware mediante dos motores DC y un stepper.
+- `esp32_server/main.py` implementa un servidor AP/híbrido de respaldo con lectura de botones físicos.
+- `esp32_server/telemetry.py` implementa un servidor web asíncrono que expone `/`, `/api/command` y `/api/telemetry`.
+- `esp32_server/index.html` ofrece una UI de control remoto con joysticks y un botón de emergencia.
 
-## Proposed Changes
+## Diseño de Software
 
----
+### Arduino Nano
+- Joysticks analógicos en `A0`, `A1`, `A2`.
+- Control de motores DC:
+  - Motor A (Carro): `AIN1=D2`, `AIN2=D4`, `PWMA=D3`.
+  - Motor B (Elevación): `BIN1=D7`, `BIN2=D8`, `PWMB=D5`.
+- Control de stepper: `STEP=D9`, `DIR=D10`.
+- Interpreta comandos UART `F,B,U,D,L,R,S`.
+- Suma la intención del joystick local con la intención remota.
+- Timeout de seguridad web de 500 ms para resetear la intención remota.
 
-### Arquitectura de Pines y Hardware
+### ESP32
+- `boot.py` proporciona menú de inicio y configuración WiFi.
+- `main.py` funciona como servidor AP local y lee controles físicos de respaldo.
+- `telemetry.py` funciona como servidor web `uasyncio` para la página remota.
+- `index.html` envía comandos con `fetch('/api/command?cmd=...')`.
 
-#### Arduino Nano
-- **Driver TB6612FNG (Motores DC N20):**
-  - Motor A (Carro): `AIN1` (D2), `AIN2` (D4), `PWMA` (D3).
-  - Motor B (Elevación): `BIN1` (D7), `BIN2` (D8), `PWMB` (D5).
-  - `STBY`: VCC (5V).
-- **Driver DRV8825 (Nema 17 - Giro):**
-  - `STEP`: Pin D9
-  - `DIR`: Pin D10
-- **Joysticks:**
-  - `X` (Carro): Pin A0
-  - `Y` (Elevación): Pin A1
-  - `Giro`: Pin A2
-- **Comunicación ESP32 (Hardware Serial a 9600 bps):**
-  - `RX`: Pin D0 (Conectado al TX del ESP32).
+## Archivo Clave de Interfaz
+- `esp32_server/index.html` usa un joystick circular para `F/B/L/R`, un joystick lineal para `U/D` y un botón de emergencia para `S`.
 
-#### ESP32 DevKit V1
-- **UART a Arduino Nano:**
-  - `TX`: GPIO 17 (Conectado a RX del Nano).
-- **Status LED:**
-  - `LED`: GPIO 2.
+## Verificación
+1. Revisar que las rutas y los endpoints web correspondan con `main.py`/`telemetry.py`.
+2. Confirmar que Arduino reciba y aplique correctamente `F/B/U/D/L/R/S`.
+3. Probar que la UI remota funcione en el navegador y que el botón E-Stop envíe `S`.
+4. Verificar el timeout de 500 ms en el firmware Arduino.
 
----
-
-### Archivos a Generar
-
-#### [NEW] `grua_arduino/grua_arduino.ino`
-- Integración de `TB6612FNG` y `AccelStepper`.
-- Lectura de Joysticks (A0, A1, A2).
-- Parser UART simple a 9600 baudios: 'F', 'B', 'U', 'D', 'L', 'R', 'S'.
-- Timeout de seguridad web: si pasa `X` ms sin comando web, la intención web vuelve a cero.
-- Sumatoria de intenciones: `velocidad_final = intencion_joystick + intencion_web`.
-
-#### [NEW] `esp32_server/boot.py`
-- Configuración de red WiFi en modo Station (o AP) para MicroPython.
-
-#### [NEW] `esp32_server/main.py`
-- Servidor web asíncrono (`uasyncio`).
-- Lógica para recibir peticiones en el endpoint `/api/command` y transmitir el comando `F,B,U,D,L,R,S` vía UART (GPIO 17) a 9600 bps.
-- Endpoint `/` que sirve el archivo `index.html`.
-
-#### [NEW] `esp32_server/index.html`
-- Interfaz web minimalista pero moderna ("Control Remoto").
-- Botones de control con uso de `fetch()` mediante JavaScript (eventos `mousedown`/`touchstart` para enviar comando y `mouseup`/`touchend` para enviar 'S').
-
-#### [NEW] `openspec.md`
-- Documento de especificación OpenSpec.
-- Diagramas (o descripción) de la lógica de control.
-- Especificación del protocolo UART y la API del servidor web.
-
-## Verification Plan
-
-### Manual Verification
-1. Verificación de sintaxis de los archivos Python y Arduino.
-2. Comprobación de que la arquitectura de pines en el código corresponde exactamente con la descrita en los requerimientos.
-3. Generación del repositorio Github `PG_2526_Nombre_Apellido`.
+## Consideraciones Técnicas
+- Las funcionalidades de servidor web y de control físico se pueden ejecutar en dos scripts distintos (`main.py` y `telemetry.py`) según el modo de uso.
+- El documento actual describe el estado real del repositorio, no una versión hipotética.
