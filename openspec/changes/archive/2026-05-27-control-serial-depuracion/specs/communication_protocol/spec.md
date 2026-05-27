@@ -1,19 +1,4 @@
-# UART Communication Protocol
-
-## Purpose
-This specification defines the serial communication protocol between the ESP32 (Web Gateway) and the Arduino Nano (Motor Actuator).
-## Requirements
-### Requirement: UART Configuration
-The serial connection MUST use a standard baud rate of 9600 bps and 8N1 format.
-- **Baud Rate**: 9600 bps
-- **Data Bits**: 8
-- **Parity**: None
-- **Stop Bits**: 1
-- **Physical Pins**: ESP32 TX (GPIO 17) -> Arduino RX
-
-#### Scenario: Normal UART Initialization
-- **WHEN** the system boots up
-- **THEN** the serial ports on both microcontrollers must be initialized to 9600 8N1.
+## MODIFIED Requirements
 
 ### Requirement: Control Commands
 The system SHALL support simple, single-character ASCII commands for actions and modes sent over the USB hardware serial connection:
@@ -34,4 +19,3 @@ The system SHALL support simple, single-character ASCII commands for actions and
 #### Scenario: Mode Synchronization Command
 - **WHEN** the Arduino Nano changes control mode via physical button press
 - **THEN** it must transmit the new mode character ('W' or 'M') over hardware serial (USB) back to the laptop browser.
-
