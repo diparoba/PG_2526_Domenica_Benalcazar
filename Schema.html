@@ -123,7 +123,7 @@
 
         body.light-mode .svg-container::after { display: none; }
 
-        svg {
+        .svg-container svg {
             min-width: 600px;
             height: auto;
         }
@@ -339,6 +339,307 @@
         body.light-mode .box-motor-car { fill: #dbeafe; stroke: #3b82f6; }
         body.light-mode .box-motor-elev { fill: #d1fae5; stroke: #10b981; }
         body.light-mode .box-motor-giro { fill: #ede9fe; stroke: #8b5cf6; }
+
+        /* ESTILOS ADICIONALES PARA COMPONENTES INTERACTIVOS */
+        .component-interactive {
+            cursor: pointer;
+        }
+        
+        .component-interactive:hover .component-box {
+            stroke: var(--accent-blue);
+            stroke-width: 3.5px;
+            filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.4));
+        }
+
+        .component-interactive[data-component="power-supply"]:hover .component-box {
+            stroke: var(--accent-orange);
+            filter: drop-shadow(0 0 8px rgba(251, 146, 60, 0.4));
+        }
+
+        .component-interactive[data-component^="motor"]:hover .component-box {
+            stroke: var(--accent-green);
+            filter: drop-shadow(0 0 8px rgba(74, 222, 128, 0.4));
+        }
+
+        /* MODAL OVERLAY */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+            z-index: 2000;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* MODAL CONTAINER */
+        .modal-container {
+            background: rgba(30, 41, 59, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 25px rgba(56, 189, 248, 0.15);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transform: scale(0.9);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            color: var(--text-light);
+        }
+
+        .modal-overlay.active .modal-container {
+            transform: scale(1);
+        }
+
+        /* LIGHT MODE OVERRIDES FOR MODAL */
+        body.light-mode .modal-overlay {
+            background: rgba(248, 250, 252, 0.6);
+        }
+        body.light-mode .modal-container {
+            background: rgba(255, 255, 255, 0.9);
+            border-color: rgba(0, 0, 0, 0.1);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15), 0 0 25px rgba(56, 189, 248, 0.1);
+        }
+
+        /* CLOSE BUTTON */
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            color: var(--text-light);
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        body.light-mode .modal-close {
+            background: rgba(0, 0, 0, 0.05);
+            color: var(--text-light);
+        }
+
+        .modal-close:hover {
+            background: #ef4444;
+            color: white;
+            transform: rotate(90deg);
+        }
+
+        /* MODAL CONTENT LAYOUT */
+        .modal-body {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+        }
+
+        @media (min-width: 650px) {
+            .modal-body {
+                grid-template-columns: 1fr 1.2fr;
+            }
+        }
+
+        /* LEFT COLUMN (VISUALS) */
+        .modal-visuals {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-image-container {
+            width: 100%;
+            max-width: 250px;
+            height: 200px;
+            background: #090d16;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            padding: 10px;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
+        }
+
+        body.light-mode .modal-image-container {
+            background: #f1f5f9;
+            border-color: rgba(0,0,0,0.05);
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+        }
+
+        .modal-image-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+
+        .modal-symbol-container {
+            width: 100%;
+            max-width: 250px;
+            height: 120px;
+            background: rgba(15, 23, 42, 0.4);
+            border-radius: 12px;
+            border: 1px dashed rgba(255, 255, 255, 0.15);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+        }
+
+        body.light-mode .modal-symbol-container {
+            background: rgba(241, 245, 249, 0.4);
+            border-color: rgba(0, 0, 0, 0.15);
+        }
+
+        .modal-symbol-container svg {
+            min-width: 0 !important;
+            width: auto;
+            max-width: 100%;
+            height: 100%;
+            max-height: 80px;
+        }
+
+        .modal-image-container svg {
+            min-width: 0 !important;
+            width: auto;
+            max-width: 100%;
+            height: 100%;
+            max-height: 180px;
+        }
+
+        .modal-symbol-title {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        /* RIGHT COLUMN (INFO) */
+        .modal-info {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .modal-title-area {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .modal-title-area h3 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin: 0;
+            color: var(--accent-blue);
+        }
+
+        .modal-badge {
+            align-self: flex-start;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .modal-desc {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: #cbd5e1;
+            margin: 0;
+        }
+
+        body.light-mode .modal-desc {
+            color: #475569;
+        }
+
+        .modal-section-title {
+            font-size: 0.85rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: var(--accent-yellow);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 6px;
+            margin: 10px 0 6px 0;
+        }
+
+        body.light-mode .modal-section-title {
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .specs-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            font-size: 0.85rem;
+        }
+
+        .spec-item {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .spec-label {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .spec-value {
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+
+        body.light-mode .spec-value {
+            color: #1e293b;
+        }
+
+        .connections-list {
+            margin: 0;
+            padding-left: 18px;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            color: #cbd5e1;
+        }
+
+        body.light-mode .connections-list {
+            color: #475569;
+        }
+
+        .connections-list li {
+            margin-bottom: 6px;
+        }
     </style>
 </head>
 <body>
@@ -374,110 +675,130 @@
             <div class="svg-container">
                 <svg width="820" height="600" viewBox="0 0 820 600">
                     <!-- FUENTE DE ALIMENTACION -->
-                    <rect x="350" y="15" width="120" height="55" rx="6" class="component-box box-power"/>
-                    <text x="410" y="30" class="component-title" style="font-size: 10px;">FUENTE DE POTENCIA</text>
-                    <text x="410" y="45" class="component-title" style="font-size: 9px; fill: var(--accent-orange);">12V DC</text>
-                    <text x="360" y="63" class="pin-label">+12V</text>
-                    <text x="440" y="63" class="pin-label" text-anchor="end">GND</text>
+                    <g class="component-interactive" data-component="power-supply">
+                        <rect x="350" y="15" width="120" height="55" rx="6" class="component-box box-power"/>
+                        <text x="410" y="30" class="component-title" style="font-size: 10px;">FUENTE DE POTENCIA</text>
+                        <text x="410" y="45" class="component-title" style="font-size: 9px; fill: var(--accent-orange);">12V DC</text>
+                        <text x="360" y="63" class="pin-label">+12V</text>
+                        <text x="440" y="63" class="pin-label" text-anchor="end">GND</text>
+                    </g>
 
                     <!-- ESP32 DEV KIT -->
-                    <rect x="30" y="100" width="120" height="150" rx="8" class="component-box"/>
-                    <text x="90" y="118" class="component-title">ESP32 GATEWAY</text>
-                    
-                    <text x="135" y="145" class="pin-label" text-anchor="end">TX2 (G17)</text>
-                    <text x="135" y="165" class="pin-label" text-anchor="end">RX2 (G16)</text>
-                    <text x="135" y="195" class="pin-label" text-anchor="end">VIN (5V)</text>
-                    <text x="135" y="215" class="pin-label" text-anchor="end">GND</text>
+                    <g class="component-interactive" data-component="esp32">
+                        <rect x="30" y="100" width="120" height="150" rx="8" class="component-box"/>
+                        <text x="90" y="118" class="component-title">ESP32 GATEWAY</text>
+                        
+                        <text x="135" y="145" class="pin-label" text-anchor="end">TX2 (G17)</text>
+                        <text x="135" y="165" class="pin-label" text-anchor="end">RX2 (G16)</text>
+                        <text x="135" y="195" class="pin-label" text-anchor="end">VIN (5V)</text>
+                        <text x="135" y="215" class="pin-label" text-anchor="end">GND</text>
+                    </g>
                     
                     <!-- ARDUINO NANO -->
-                    <rect x="220" y="100" width="140" height="280" rx="8" class="component-box"/>
-                    <text x="290" y="118" class="component-title">ARDUINO NANO</text>
-                    
-                    <text x="230" y="145" class="pin-label">RX (D0)</text>
-                    <text x="230" y="165" class="pin-label">TX (D1)</text>
-                    <text x="230" y="195" class="pin-label">5V</text>
-                    <text x="230" y="215" class="pin-label">GND</text>
-                    <text x="230" y="255" class="pin-label">D11 (BTN)</text>
-                    <text x="230" y="295" class="pin-label">A0 (JOY1 X)</text>
-                    <text x="230" y="315" class="pin-label">A2 (JOY1 Y)</text>
-                    <text x="230" y="335" class="pin-label">A1 (JOY2 X)</text>
-                    
-                    <text x="330" y="145" class="pin-label" text-anchor="end">D2 (AIN1)</text>
-                    <text x="330" y="160" class="pin-label" text-anchor="end">D3 (PWMA)</text>
-                    <text x="330" y="175" class="pin-label" text-anchor="end">D4 (AIN2)</text>
-                    <text x="330" y="200" class="pin-label" text-anchor="end">D5 (PWMB)</text>
-                    <text x="330" y="215" class="pin-label" text-anchor="end">D7 (BIN1)</text>
-                    <text x="330" y="230" class="pin-label" text-anchor="end">D8 (BIN2)</text>
-                    <text x="330" y="260" class="pin-label" text-anchor="end">D9 (CIN1)</text>
-                    <text x="330" y="275" class="pin-label" text-anchor="end">D10 (CIN2)</text>
-                    <text x="330" y="290" class="pin-label" text-anchor="end">D6 (PWMC)</text>
+                    <g class="component-interactive" data-component="arduino">
+                        <rect x="220" y="100" width="140" height="280" rx="8" class="component-box"/>
+                        <text x="290" y="118" class="component-title">ARDUINO NANO</text>
+                        
+                        <text x="230" y="145" class="pin-label">RX (D0)</text>
+                        <text x="230" y="165" class="pin-label">TX (D1)</text>
+                        <text x="230" y="195" class="pin-label">5V</text>
+                        <text x="230" y="215" class="pin-label">GND</text>
+                        <text x="230" y="255" class="pin-label">D11 (BTN)</text>
+                        <text x="230" y="295" class="pin-label">A0 (JOY1 X)</text>
+                        <text x="230" y="315" class="pin-label">A2 (JOY1 Y)</text>
+                        <text x="230" y="335" class="pin-label">A1 (JOY2 X)</text>
+                        
+                        <text x="330" y="145" class="pin-label" text-anchor="end">D2 (AIN1)</text>
+                        <text x="330" y="160" class="pin-label" text-anchor="end">D3 (PWMA)</text>
+                        <text x="330" y="175" class="pin-label" text-anchor="end">D4 (AIN2)</text>
+                        <text x="330" y="200" class="pin-label" text-anchor="end">D5 (PWMB)</text>
+                        <text x="330" y="215" class="pin-label" text-anchor="end">D7 (BIN1)</text>
+                        <text x="330" y="230" class="pin-label" text-anchor="end">D8 (BIN2)</text>
+                        <text x="330" y="260" class="pin-label" text-anchor="end">D9 (CIN1)</text>
+                        <text x="330" y="275" class="pin-label" text-anchor="end">D10 (CIN2)</text>
+                        <text x="330" y="290" class="pin-label" text-anchor="end">D6 (PWMC)</text>
+                    </g>
 
                     <!-- JOYSTICK 1 (CARRO / GIRO) -->
-                    <rect x="30" y="300" width="120" height="110" rx="6" class="component-box"/>
-                    <text x="90" y="318" class="component-title">JOYSTICK 1</text>
-                    <text x="90" y="330" class="component-title" style="font-size: 8px; fill: var(--text-muted);">CARRO & GIRO</text>
-                    <text x="135" y="350" class="pin-label" text-anchor="end">5V (VCC)</text>
-                    <text x="135" y="365" class="pin-label" text-anchor="end">GND</text>
-                    <text x="135" y="380" class="pin-label" text-anchor="end">VRX -> A0</text>
-                    <text x="135" y="395" class="pin-label" text-anchor="end">VRY -> A2</text>
+                    <g class="component-interactive" data-component="joystick-1">
+                        <rect x="30" y="300" width="120" height="110" rx="6" class="component-box"/>
+                        <text x="90" y="318" class="component-title">JOYSTICK 1</text>
+                        <text x="90" y="330" class="component-title" style="font-size: 8px; fill: var(--text-muted);">CARRO & GIRO</text>
+                        <text x="135" y="350" class="pin-label" text-anchor="end">5V (VCC)</text>
+                        <text x="135" y="365" class="pin-label" text-anchor="end">GND</text>
+                        <text x="135" y="380" class="pin-label" text-anchor="end">VRX -> A0</text>
+                        <text x="135" y="395" class="pin-label" text-anchor="end">VRY -> A2</text>
+                    </g>
 
                     <!-- JOYSTICK 2 (ELEVACION / BOTON MODO) -->
-                    <rect x="30" y="440" width="120" height="110" rx="6" class="component-box"/>
-                    <text x="90" y="458" class="component-title">JOYSTICK 2</text>
-                    <text x="90" y="470" class="component-title" style="font-size: 8px; fill: var(--text-muted);">ELEVACIÓN & MODO</text>
-                    <text x="135" y="490" class="pin-label" text-anchor="end">5V (VCC)</text>
-                    <text x="135" y="505" class="pin-label" text-anchor="end">GND</text>
-                    <text x="135" y="520" class="pin-label" text-anchor="end">VRX -> A1</text>
-                    <text x="135" y="535" class="pin-label" text-anchor="end">SW -> D11</text>
+                    <g class="component-interactive" data-component="joystick-2">
+                        <rect x="30" y="440" width="120" height="110" rx="6" class="component-box"/>
+                        <text x="90" y="458" class="component-title">JOYSTICK 2</text>
+                        <text x="90" y="470" class="component-title" style="font-size: 8px; fill: var(--text-muted);">ELEVACIÓN & MODO</text>
+                        <text x="135" y="490" class="pin-label" text-anchor="end">5V (VCC)</text>
+                        <text x="135" y="505" class="pin-label" text-anchor="end">GND</text>
+                        <text x="135" y="520" class="pin-label" text-anchor="end">VRX -> A1</text>
+                        <text x="135" y="535" class="pin-label" text-anchor="end">SW -> D11</text>
+                    </g>
 
                     <!-- PUENTE H 1 (CARRO / ELEVACION) -->
-                    <rect x="440" y="100" width="140" height="200" rx="6" class="component-box"/>
-                    <text x="510" y="118" class="component-title">TB6612FNG (1)</text>
-                    <text x="450" y="135" class="pin-label">VM</text>
-                    <text x="450" y="150" class="pin-label">VCC</text>
-                    <text x="450" y="165" class="pin-label">GND</text>
-                    <text x="450" y="180" class="pin-label">AIN1</text>
-                    <text x="450" y="195" class="pin-label">AIN2</text>
-                    <text x="450" y="210" class="pin-label">PWMA</text>
-                    <text x="450" y="225" class="pin-label">BIN1</text>
-                    <text x="450" y="240" class="pin-label">BIN2</text>
-                    <text x="450" y="255" class="pin-label">PWMB</text>
-                    <text x="450" y="270" class="pin-label">STBY</text>
-                    <text x="530" y="145" class="pin-label">AO1</text>
-                    <text x="530" y="160" class="pin-label">AO2</text>
-                    <text x="530" y="220" class="pin-label">BO1</text>
-                    <text x="530" y="235" class="pin-label">BO2</text>
+                    <g class="component-interactive" data-component="driver-1">
+                        <rect x="440" y="100" width="140" height="200" rx="6" class="component-box"/>
+                        <text x="510" y="118" class="component-title">TB6612FNG (1)</text>
+                        <text x="450" y="135" class="pin-label">VM</text>
+                        <text x="450" y="150" class="pin-label">VCC</text>
+                        <text x="450" y="165" class="pin-label">GND</text>
+                        <text x="450" y="180" class="pin-label">AIN1</text>
+                        <text x="450" y="195" class="pin-label">AIN2</text>
+                        <text x="450" y="210" class="pin-label">PWMA</text>
+                        <text x="450" y="225" class="pin-label">BIN1</text>
+                        <text x="450" y="240" class="pin-label">BIN2</text>
+                        <text x="450" y="255" class="pin-label">PWMB</text>
+                        <text x="450" y="270" class="pin-label">STBY</text>
+                        <text x="530" y="145" class="pin-label">AO1</text>
+                        <text x="530" y="160" class="pin-label">AO2</text>
+                        <text x="530" y="220" class="pin-label">BO1</text>
+                        <text x="530" y="235" class="pin-label">BO2</text>
+                    </g>
 
                     <!-- PUENTE H 2 (GIRO) -->
-                    <rect x="440" y="330" width="140" height="150" rx="6" class="component-box"/>
-                    <text x="510" y="348" class="component-title">TB6612FNG (2)</text>
-                    <text x="450" y="365" class="pin-label">VM</text>
-                    <text x="450" y="380" class="pin-label">VCC</text>
-                    <text x="450" y="395" class="pin-label">GND</text>
-                    <text x="450" y="410" class="pin-label">CIN1 (AIN1)</text>
-                    <text x="450" y="425" class="pin-label">CIN2 (AIN2)</text>
-                    <text x="450" y="440" class="pin-label">PWMC (PWMA)</text>
-                    <text x="450" y="455" class="pin-label">STBY</text>
-                    <text x="530" y="375" class="pin-label">CO1</text>
-                    <text x="530" y="390" class="pin-label">CO2</text>
+                    <g class="component-interactive" data-component="driver-2">
+                        <rect x="440" y="330" width="140" height="150" rx="6" class="component-box"/>
+                        <text x="510" y="348" class="component-title">TB6612FNG (2)</text>
+                        <text x="450" y="365" class="pin-label">VM</text>
+                        <text x="450" y="380" class="pin-label">VCC</text>
+                        <text x="450" y="395" class="pin-label">GND</text>
+                        <text x="450" y="410" class="pin-label">CIN1 (AIN1)</text>
+                        <text x="450" y="425" class="pin-label">CIN2 (AIN2)</text>
+                        <text x="450" y="440" class="pin-label">PWMC (PWMA)</text>
+                        <text x="450" y="455" class="pin-label">STBY</text>
+                        <text x="530" y="375" class="pin-label">CO1</text>
+                        <text x="530" y="390" class="pin-label">CO2</text>
+                    </g>
 
                     <!-- MOTOR CARRO -->
-                    <rect x="670" y="100" width="110" height="70" rx="6" class="component-box box-motor-car"/>
-                    <text x="725" y="125" class="component-title">MOTOR CARRO</text>
-                    <text x="680" y="150" class="pin-label">M1+</text>
-                    <text x="760" y="150" class="pin-label" text-anchor="end">M1-</text>
+                    <g class="component-interactive" data-component="motor-car">
+                        <rect x="670" y="100" width="110" height="70" rx="6" class="component-box box-motor-car"/>
+                        <text x="725" y="125" class="component-title">MOTOR CARRO</text>
+                        <text x="680" y="150" class="pin-label">M1+</text>
+                        <text x="760" y="150" class="pin-label" text-anchor="end">M1-</text>
+                    </g>
 
                     <!-- MOTOR ELEVACION -->
-                    <rect x="670" y="200" width="110" height="70" rx="6" class="component-box box-motor-elev"/>
-                    <text x="725" y="225" class="component-title">MOTOR ELEVACIÓN</text>
-                    <text x="680" y="250" class="pin-label">M2+</text>
-                    <text x="760" y="250" class="pin-label" text-anchor="end">M2-</text>
+                    <g class="component-interactive" data-component="motor-elevation">
+                        <rect x="670" y="200" width="110" height="70" rx="6" class="component-box box-motor-elev"/>
+                        <text x="725" y="225" class="component-title">MOTOR ELEVACIÓN</text>
+                        <text x="680" y="250" class="pin-label">M2+</text>
+                        <text x="760" y="250" class="pin-label" text-anchor="end">M2-</text>
+                    </g>
 
                     <!-- MOTOR GIRO -->
-                    <rect x="670" y="370" width="110" height="70" rx="6" class="component-box box-motor-giro"/>
-                    <text x="725" y="395" class="component-title">MOTOR GIRO</text>
-                    <text x="680" y="420" class="pin-label">M3+</text>
-                    <text x="760" y="420" class="pin-label" text-anchor="end">M3-</text>
+                    <g class="component-interactive" data-component="motor-rotation">
+                        <rect x="670" y="370" width="110" height="70" rx="6" class="component-box box-motor-giro"/>
+                        <text x="725" y="395" class="component-title">MOTOR GIRO</text>
+                        <text x="680" y="420" class="pin-label">M3+</text>
+                        <text x="760" y="420" class="pin-label" text-anchor="end">M3-</text>
+                    </g>
 
                     <!-- CABLES / CONEXIONES -->
                     <!-- UART TX ESP32 -> RX NANO -->
@@ -719,6 +1040,50 @@
 
     </div>
 
+    <!-- MODAL OVERLAY PARA DETALLES DE COMPONENTE -->
+    <div class="modal-overlay" id="componentModal">
+        <div class="modal-container">
+            <button class="modal-close" id="modalClose">&times;</button>
+            <div class="modal-body">
+                <!-- Columna Izquierda: Visuales -->
+                <div class="modal-visuals">
+                    <div class="modal-image-container">
+                        <img id="modalPhysImage" src="" alt="Imagen del Componente" style="display: none;">
+                        <div id="modalPhysFallback" style="display: none; justify-content: center; align-items: center; width: 100%; height: 100%;"></div>
+                    </div>
+                    <div class="modal-symbol-container">
+                        <div class="modal-symbol-title">Símbolo Esquemático</div>
+                        <div id="modalSchemSymbol" style="display: flex; justify-content: center; align-items: center; width: 100%; height: 100%;">
+                            <!-- El SVG inline del símbolo se inyectará aquí -->
+                        </div>
+                    </div>
+                </div>
+                <!-- Columna Derecha: Información -->
+                <div class="modal-info">
+                    <div class="modal-title-area">
+                        <span class="modal-badge" id="modalComponentBadge">Categoría</span>
+                        <h3 id="modalComponentTitle">Nombre del Componente</h3>
+                    </div>
+                    <p class="modal-desc" id="modalComponentDesc">Descripción técnica del componente...</p>
+                    
+                    <div>
+                        <div class="modal-section-title">Especificaciones Técnicas</div>
+                        <div class="specs-grid" id="modalSpecsGrid">
+                            <!-- Las especificaciones se inyectarán aquí -->
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="modal-section-title">Conexiones Clave en este Sistema</div>
+                        <ul class="connections-list" id="modalConnectionsList">
+                            <!-- Las conexiones se inyectarán aquí -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const wires = document.querySelectorAll('.connection-wire');
         const wireName = document.getElementById('wireName');
@@ -796,6 +1161,441 @@
                 themeToggleBtn.textContent = 'Tema Oscuro';
             } else {
                 themeToggleBtn.textContent = 'Tema Claro';
+            }
+        });
+
+        // ==========================================
+        // LÓGICA DE DETALLES DE COMPONENTE (MODAL)
+        // ==========================================
+
+        // Base de datos de componentes
+        const componentData = {
+            'power-supply': {
+                title: 'Fuente de Potencia (12V DC)',
+                badge: 'Potencia',
+                badgeClass: 'tag-power',
+                glowColor: 'var(--accent-orange)',
+                image: 'images/power_supply_12v.png',
+                desc: 'Fuente de alimentación externa encargada de proveer la energía necesaria para la tracción de los motores. El circuito lógico funciona a 5V/3.3V, pero la fuerza mecánica requiere 12V directos de esta fuente para evitar sobrecargar los microcontroladores.',
+                specs: [
+                    { label: 'Tensión de Salida', value: '12V DC' },
+                    { label: 'Corriente Nominal', value: '2A - 5A' },
+                    { label: 'Función Principal', value: 'Alimentación de Motores (VM)' },
+                    { label: 'Protección', value: 'Sobrecarga y Cortocircuito' }
+                ],
+                connections: [
+                    'Línea positiva (+12V) conectada al pin VM (Motor Voltage) de los Drivers TB6612FNG (1) y (2).',
+                    'Línea de tierra (GND) unida a la tierra común (GND) lógica para referencia cero.'
+                ],
+                symbol: `<svg width="60" height="60" viewBox="0 0 60 60">
+                    <circle cx="30" cy="30" r="20" fill="none" stroke="var(--accent-orange)" stroke-width="2.5" />
+                    <line x1="22" y1="26" x2="38" y2="26" stroke="var(--accent-orange)" stroke-width="2.5" />
+                    <line x1="30" y1="22" x2="30" y2="30" stroke="var(--accent-orange)" stroke-width="2.5" />
+                    <line x1="22" y1="34" x2="38" y2="34" stroke="var(--accent-orange)" stroke-width="2.5" />
+                    <text x="30" y="55" font-family="'Outfit', sans-serif" font-size="9" fill="var(--text-muted)" text-anchor="middle">FUERZA DC</text>
+                </svg>`
+            },
+            'esp32': {
+                title: 'ESP32 Gateway (WiFi / Serie)',
+                badge: 'Lógica',
+                badgeClass: 'tag-vcc',
+                glowColor: 'var(--accent-yellow)',
+                image: 'images/esp32_gateway.png',
+                desc: 'Microcontrolador principal del módulo inalámbrico. Configura un Punto de Acceso (AP) y levanta un servidor HTTP asíncrono. Su rol principal es recibir comandos táctiles del navegador cliente y retransmitirlos por puerto serie (UART) al Arduino Nano en tiempo real.',
+                specs: [
+                    { label: 'Núcleo', value: 'Tensilica Xtensa Dual-Core 32-bit' },
+                    { label: 'Conectividad', value: 'Wi-Fi 802.11 b/g/n & BT' },
+                    { label: 'Frecuencia Reloj', value: '240 MHz' },
+                    { label: 'Tensión Entrada', value: '5V (USB / VIN)' }
+                ],
+                connections: [
+                    'Pin TX2 (GPIO 17) conectado al pin RX (D0) del Arduino Nano para el envío de comandos.',
+                    'Pin RX2 (GPIO 16) conectado al pin TX (D1) del Arduino Nano para la retroalimentación de modo.',
+                    'Líneas VIN (5V) y GND conectadas a la barra de alimentación lógica compartida con el Arduino.'
+                ],
+                symbol: `<svg width="70" height="50" viewBox="0 0 70 50">
+                    <rect x="15" y="10" width="40" height="30" rx="3" fill="none" stroke="var(--accent-yellow)" stroke-width="2.5" />
+                    <line x1="5" y1="18" x2="15" y2="18" stroke="var(--accent-yellow)" stroke-width="2" />
+                    <line x1="5" y1="25" x2="15" y2="25" stroke="var(--accent-yellow)" stroke-width="2" />
+                    <line x1="5" y1="32" x2="15" y2="32" stroke="var(--accent-yellow)" stroke-width="2" />
+                    <line x1="55" y1="18" x2="65" y2="18" stroke="var(--accent-yellow)" stroke-width="2" />
+                    <line x1="55" y1="25" x2="65" y2="25" stroke="var(--accent-yellow)" stroke-width="2" />
+                    <line x1="55" y1="32" x2="65" y2="32" stroke="var(--accent-yellow)" stroke-width="2" />
+                    <path d="M 30 10 L 35 5 L 40 10" fill="none" stroke="var(--accent-yellow)" stroke-width="1.5" />
+                    <line x1="35" y1="5" x2="35" y2="10" stroke="var(--accent-yellow)" stroke-width="1.5" />
+                    <text x="35" y="30" font-family="'Outfit', sans-serif" font-weight="bold" font-size="8" fill="var(--accent-yellow)" text-anchor="middle">ESP32</text>
+                </svg>`
+            },
+            'arduino': {
+                title: 'Arduino Nano (Controlador Principal)',
+                badge: 'Lógica / Control',
+                badgeClass: 'tag-uart',
+                glowColor: 'var(--accent-blue)',
+                image: 'images/arduino_nano.png',
+                desc: 'El microcontrolador principal encargado de la ejecución física de la grúa. Mide constantemente las entradas analógicas de los joysticks (0-5V) y los comandos que llegan desde la web mediante la UART (0 y 1). Realiza la mezcla lógica (intenciones de control) y genera las señales PWM y de dirección para controlar los motores.',
+                specs: [
+                    { label: 'Chip MCU', value: 'ATmega328P (8-bit)' },
+                    { label: 'Frecuencia Reloj', value: '16 MHz' },
+                    { label: 'Pines Entrada Analógica', value: '8 (A0-A7)' },
+                    { label: 'E/S Digitales', value: '14 (6 con PWM)' }
+                ],
+                connections: [
+                    'Pines analógicos A0, A1 y A2 conectados a los potenciómetros de los joysticks físicos.',
+                    'Pines D2, D3, D4, D5, D7, D8 conectados al TB6612FNG (1) para dirección y velocidad de Carro y Elevación.',
+                    'Pines D9, D6, D10 conectados al TB6612FNG (2) para velocidad y dirección del Motor Giro.',
+                    'Pin D11 configurado con PULLUP interna para leer el pulsador de cambio de modo de control.',
+                    'Puerto de comunicación por Hardware UART (D0 RX, D1 TX) cruzado hacia el ESP32 Gateway.'
+                ],
+                symbol: `<svg width="80" height="50" viewBox="0 0 80 50">
+                    <rect x="10" y="8" width="60" height="34" rx="4" fill="none" stroke="var(--accent-blue)" stroke-width="2.5" />
+                    <rect x="30" y="17" width="20" height="16" fill="none" stroke="var(--accent-blue)" stroke-width="1.5" />
+                    <line x1="20" y1="2" x2="20" y2="8" stroke="var(--accent-blue)" stroke-width="1.5" />
+                    <line x1="30" y1="2" x2="30" y2="8" stroke="var(--accent-blue)" stroke-width="1.5" />
+                    <line x1="40" y1="2" x2="40" y2="8" stroke="var(--accent-blue)" stroke-width="1.5" />
+                    <line x1="50" y1="2" x2="50" y2="8" stroke="var(--accent-blue)" stroke-width="1.5" />
+                    <line x1="60" y1="2" x2="60" y2="8" stroke="var(--accent-blue)" stroke-width="1.5" />
+                    <line x1="20" y1="42" x2="20" y2="48" stroke="var(--accent-blue)" stroke-width="1.5" />
+                    <line x1="30" y1="42" x2="30" y2="48" stroke="var(--accent-blue)" stroke-width="1.5" />
+                    <line x1="40" y1="42" x2="40" y2="48" stroke="var(--accent-blue)" stroke-width="1.5" />
+                    <line x1="50" y1="42" x2="50" y2="48" stroke="var(--accent-blue)" stroke-width="1.5" />
+                    <line x1="60" y1="42" x2="60" y2="48" stroke="var(--accent-blue)" stroke-width="1.5" />
+                    <text x="40" y="27" font-family="'Outfit', sans-serif" font-size="8" fill="var(--text-light)" text-anchor="middle" font-weight="600">NANO</text>
+                </svg>`
+            },
+            'joystick-1': {
+                title: 'Joystick 1 (Carro y Giro)',
+                badge: 'Mando Local',
+                badgeClass: 'tag-sig',
+                glowColor: 'var(--accent-blue)',
+                image: 'images/joystick_module.png',
+                desc: 'Mando analógico físico bidireccional que actúa en el eje X y Y. Envia valores analógicos de tensión (entre 0V y 5V, centrado en ~2.5V) correspondientes al ángulo de inclinación de la palanca. Se usa para controlar de forma manual local la traslación del carro y la rotación de la pluma de la grúa.',
+                specs: [
+                    { label: 'Ejes Analógicos', value: '2 (Potenciómetros 10k)' },
+                    { label: 'Señal Salida', value: 'Analógica ratiométrica (0-VCC)' },
+                    { label: 'Alimentación', value: '5V DC' },
+                    { label: 'Uso en Sistema', value: 'Carro (VRX) & Giro (VRY)' }
+                ],
+                connections: [
+                    'Pin VCC conectado a los 5V de Arduino Nano.',
+                    'Pin GND conectado al GND de Arduino Nano.',
+                    'Pin de eje X (VRX) conectado al pin analógico A0 del Arduino Nano.',
+                    'Pin de eje Y (VRY) conectado al pin analógico A2 del Arduino Nano.'
+                ],
+                symbol: `<svg width="60" height="60" viewBox="0 0 60 60">
+                    <circle cx="30" cy="30" r="22" fill="none" stroke="var(--accent-blue)" stroke-width="2" />
+                    <line x1="30" y1="12" x2="30" y2="48" stroke="var(--accent-blue)" stroke-width="1.5" />
+                    <line x1="12" y1="30" x2="48" y2="30" stroke="var(--accent-blue)" stroke-width="1.5" />
+                    <path d="M 30 12 L 27 17 M 30 12 L 33 17" stroke="var(--accent-blue)" stroke-width="1.5" stroke-linecap="round" />
+                    <path d="M 30 48 L 27 43 M 30 48 L 33 43" stroke="var(--accent-blue)" stroke-width="1.5" stroke-linecap="round" />
+                    <path d="M 12 30 L 17 27 M 12 30 L 17 33" stroke="var(--accent-blue)" stroke-width="1.5" stroke-linecap="round" />
+                    <path d="M 48 30 L 43 27 M 48 30 L 43 33" stroke="var(--accent-blue)" stroke-width="1.5" stroke-linecap="round" />
+                    <circle cx="30" cy="30" r="4" fill="var(--accent-blue)" />
+                </svg>`
+            },
+            'joystick-2': {
+                title: 'Joystick 2 (Elevación y Modo)',
+                badge: 'Mando Local',
+                badgeClass: 'tag-sig',
+                glowColor: 'var(--accent-green)',
+                image: 'images/joystick_module.png',
+                desc: 'Segundo mando analógico físico. Regula analógicamente el eje X (elevación y descenso del gancho). También aprovecha el pulsador digital integrado al presionar hacia abajo la palanca, el cual activa la alternancia del modo de control general de la grúa (Manual local <=> Remoto WiFi).',
+                specs: [
+                    { label: 'Ejes Analógicos', value: '1 usado (Elevación)' },
+                    { label: 'Pulsador Digital', value: 'Sí (Salida SW)' },
+                    { label: 'Alimentación', value: '5V DC' },
+                    { label: 'Uso en Sistema', value: 'Elevación (VRX) & Modo (SW)' }
+                ],
+                connections: [
+                    'Pin VCC y GND conectados al bus lógico de 5V y GND del Arduino Nano.',
+                    'Pin de eje X (VRX) conectado al pin analógico A1 del Arduino Nano.',
+                    'Pin del interruptor digital (SW) conectado al pin digital D11 del Arduino.'
+                ],
+                symbol: `<svg width="60" height="60" viewBox="0 0 60 60">
+                    <circle cx="30" cy="30" r="22" fill="none" stroke="var(--accent-green)" stroke-width="2" />
+                    <line x1="30" y1="12" x2="30" y2="48" stroke="var(--accent-green)" stroke-width="1.5" />
+                    <path d="M 30 12 L 27 17 M 30 12 L 33 17" stroke="var(--accent-green)" stroke-width="1.5" stroke-linecap="round" />
+                    <path d="M 30 48 L 27 43 M 30 48 L 33 43" stroke="var(--accent-green)" stroke-width="1.5" stroke-linecap="round" />
+                    <circle cx="30" cy="30" r="4" fill="var(--accent-green)" />
+                    <line x1="12" y1="20" x2="20" y2="20" stroke="var(--accent-green)" stroke-width="1.5" />
+                    <line x1="20" y1="20" x2="26" y2="15" stroke="var(--accent-green)" stroke-width="1.5" />
+                    <line x1="26" y1="20" x2="32" y2="20" stroke="var(--accent-green)" stroke-width="1.5" />
+                </svg>`
+            },
+            'driver-1': {
+                title: 'Driver de Motores TB6612FNG (1)',
+                badge: 'Potencia',
+                badgeClass: 'tag-power',
+                glowColor: 'var(--accent-blue)',
+                image: 'images/tb6612fng_driver.png',
+                desc: 'Controlador de motores integrado de doble puente H a base de MOSFETs. Su alta eficiencia térmica le permite controlar dos motores DC simultáneamente de manera independiente. Recibe comandos lógicos del Arduino y regula la tensión e inversión de polaridad para mover el Carro y el gancho de Elevación.',
+                specs: [
+                    { label: 'Tensión Motores (VM)', value: 'Hasta 15V DC' },
+                    { label: 'Tensión Lógica (VCC)', value: '2.7V - 5.5V DC' },
+                    { label: 'Corriente Salida', value: '1.2A continuos (3.2A pico)' },
+                    { label: 'Protecciones', value: 'Apagado térmico y bajo voltaje' }
+                ],
+                connections: [
+                    'Pin VM conectado a la línea de potencia externa de 12V.',
+                    'Pin VCC conectado a los 5V lógicos de control del Arduino.',
+                    'Pin Standby (STBY) puenteado a VCC para mantener el chip siempre activo.',
+                    'Entradas lógicas AIN1 (D2), AIN2 (D4) y PWMA (D3) regulan dirección y velocidad del Motor Carro.',
+                    'Entradas lógicas BIN1 (D7), BIN2 (D8) y PWMB (D5) regulan dirección y velocidad del Motor Elevación.',
+                    'Salidas AO1/AO2 conectadas al Motor Carro y BO1/BO2 al Motor Elevación.'
+                ],
+                symbol: `<svg width="70" height="50" viewBox="0 0 70 50">
+                    <rect x="10" y="8" width="50" height="34" rx="3" fill="none" stroke="var(--accent-blue)" stroke-width="2" />
+                    <text x="35" y="24" font-family="'Outfit', sans-serif" font-weight="bold" font-size="8" fill="var(--accent-blue)" text-anchor="middle">TB6612</text>
+                    <text x="35" y="34" font-family="'Outfit', sans-serif" font-size="7" fill="var(--text-muted)" text-anchor="middle">CANAL A & B</text>
+                    <line x1="2" y1="15" x2="10" y2="15" stroke="var(--accent-blue)" stroke-width="1.5" />
+                    <line x1="2" y1="35" x2="10" y2="35" stroke="var(--accent-blue)" stroke-width="1.5" />
+                    <line x1="60" y1="15" x2="68" y2="15" stroke="var(--accent-blue)" stroke-width="1.5" />
+                    <line x1="60" y1="35" x2="68" y2="35" stroke="var(--accent-blue)" stroke-width="1.5" />
+                </svg>`
+            },
+            'driver-2': {
+                title: 'Driver de Motores TB6612FNG (2)',
+                badge: 'Potencia',
+                badgeClass: 'tag-power',
+                glowColor: 'var(--accent-purple)',
+                image: 'images/tb6612fng_driver.png',
+                desc: 'Segundo módulo de puente H TB6612FNG. Se añade para el accionamiento de la rotación física de la pluma giratoria. En esta configuración, solo se utiliza el Canal A (renombrado como canal C en la lógica del esquema) para el control del motor de giro.',
+                specs: [
+                    { label: 'Tensión Motores (VM)', value: 'Hasta 15V DC' },
+                    { label: 'Tensión Lógica (VCC)', value: '2.7V - 5.5V' },
+                    { label: 'Canales Usados', value: '1 de 2 (Canal C - Giro)' },
+                    { label: 'Alimentación Lógica', value: '5V (Arduino)' }
+                ],
+                connections: [
+                    'Pin VM conectado a los 12V de alimentación de potencia y GND unificada.',
+                    'Pin STBY conectado a 5V para habilitar el funcionamiento del driver.',
+                    'Entradas CIN1 (D9), CIN2 (D10) y PWMC (D6) del Arduino para controlar la rotación.',
+                    'Salidas de potencia CO1 / CO2 (AO1 / AO2 físicamente) conectadas a los terminales del Motor Giro.'
+                ],
+                symbol: `<svg width="70" height="50" viewBox="0 0 70 50">
+                    <rect x="10" y="8" width="50" height="34" rx="3" fill="none" stroke="var(--accent-purple)" stroke-width="2" />
+                    <text x="35" y="24" font-family="'Outfit', sans-serif" font-weight="bold" font-size="8" fill="var(--accent-purple)" text-anchor="middle">TB6612</text>
+                    <text x="35" y="34" font-family="'Outfit', sans-serif" font-size="7" fill="var(--text-muted)" text-anchor="middle">CANAL C (GIRO)</text>
+                    <line x1="2" y1="25" x2="10" y2="25" stroke="var(--accent-purple)" stroke-width="1.5" />
+                    <line x1="60" y1="25" x2="68" y2="25" stroke="var(--accent-purple)" stroke-width="1.5" />
+                </svg>`
+            },
+            'motor-car': {
+                title: 'Motor Carro (Traslación)',
+                badge: 'Actuador',
+                badgeClass: 'tag-sig',
+                glowColor: 'var(--accent-blue)',
+                image: 'images/dc_motor_n20.png',
+                desc: 'Motor DC reductor tipo N20 encargado de mover el carro deslizador a lo largo de la pluma de la grúa. Funciona invirtiendo la polaridad eléctrica para cambiar el sentido de rotación (adelante/atrás) y mediante modulación PWM para variar su velocidad.',
+                specs: [
+                    { label: 'Tipo de Motor', value: 'Micro Motor DC N20' },
+                    { label: 'Tensión Nominal', value: '12V DC' },
+                    { label: 'Reducción', value: 'Metálica de alto torque' },
+                    { label: 'Controlador', value: 'Driver 1 (Canal A)' }
+                ],
+                connections: [
+                    'Terminal positivo (M1+) conectado a la salida AO1 del Driver 1.',
+                    'Terminal negativo (M1-) conectado a la salida AO2 del Driver 1.'
+                ],
+                symbol: `<svg width="60" height="60" viewBox="0 0 60 60">
+                    <circle cx="30" cy="30" r="18" fill="none" stroke="var(--accent-blue)" stroke-width="2.5" />
+                    <text x="30" y="36" font-family="'Outfit', sans-serif" font-weight="bold" font-size="18" fill="var(--accent-blue)" text-anchor="middle">M</text>
+                    <line x1="2" y1="30" x2="12" y2="30" stroke="var(--accent-blue)" stroke-width="2" />
+                    <line x1="48" y1="30" x2="58" y2="30" stroke="var(--accent-blue)" stroke-width="2" />
+                    <text x="30" y="55" font-family="'Outfit', sans-serif" font-size="8" fill="var(--text-muted)" text-anchor="middle">MOTOR CARRO</text>
+                </svg>`
+            },
+            'motor-elevation': {
+                title: 'Motor Elevación (Gancho)',
+                badge: 'Actuador',
+                badgeClass: 'tag-sig',
+                glowColor: 'var(--accent-green)',
+                image: 'images/dc_motor_n20.png',
+                desc: 'Motor DC reductor tipo N20 acoplado al tambor de bobinado del cable. Su función es levantar o descender la carga suspendida por el gancho de la grúa. Requiere un excelente control de velocidad (PWM) y frenado dinámico a través de los estados del driver.',
+                specs: [
+                    { label: 'Tipo de Motor', value: 'Micro Motor DC N20' },
+                    { label: 'Tensión Nominal', value: '12V DC' },
+                    { label: 'Reducción', value: 'Metálica de alta fuerza' },
+                    { label: 'Controlador', value: 'Driver 1 (Canal B)' }
+                ],
+                connections: [
+                    'Terminal positivo (M2+) conectado a la salida BO1 del Driver 1.',
+                    'Terminal negativo (M2-) conectado a la salida BO2 del Driver 1.'
+                ],
+                symbol: `<svg width="60" height="60" viewBox="0 0 60 60">
+                    <circle cx="30" cy="30" r="18" fill="none" stroke="var(--accent-green)" stroke-width="2.5" />
+                    <text x="30" y="36" font-family="'Outfit', sans-serif" font-weight="bold" font-size="18" fill="var(--accent-green)" text-anchor="middle">M</text>
+                    <line x1="2" y1="30" x2="12" y2="30" stroke="var(--accent-green)" stroke-width="2" />
+                    <line x1="48" y1="30" x2="58" y2="30" stroke="var(--accent-green)" stroke-width="2" />
+                    <text x="30" y="55" font-family="'Outfit', sans-serif" font-size="8" fill="var(--text-muted)" text-anchor="middle">ELEVACIÓN</text>
+                </svg>`
+            },
+            'motor-rotation': {
+                title: 'Motor Giro (Pluma)',
+                badge: 'Actuador',
+                badgeClass: 'tag-sig',
+                glowColor: 'var(--accent-purple)',
+                image: 'images/dc_motor_n20.png',
+                desc: 'Motor DC reductor N20 acoplado a la corona de giro en la base de la torre. Permite rotar la estructura de la pluma hacia la izquierda o derecha sobre su eje vertical. Un control PWM preciso evita oscilaciones bruscas de la carga suspendida al iniciar o detener el movimiento.',
+                specs: [
+                    { label: 'Tipo de Motor', value: 'Micro Motor DC N20' },
+                    { label: 'Tensión Nominal', value: '12V DC' },
+                    { label: 'Reducción', value: 'Metálica de alto torque' },
+                    { label: 'Controlador', value: 'Driver 2 (Canal C)' }
+                ],
+                connections: [
+                    'Terminal positivo (M3+) conectado a la salida CO1 (AO1) del Driver 2.',
+                    'Terminal negativo (M3-) conectado a la salida CO2 (AO2) del Driver 2.'
+                ],
+                symbol: `<svg width="60" height="60" viewBox="0 0 60 60">
+                    <circle cx="30" cy="30" r="18" fill="none" stroke="var(--accent-purple)" stroke-width="2.5" />
+                    <text x="30" y="36" font-family="'Outfit', sans-serif" font-weight="bold" font-size="18" fill="var(--accent-purple)" text-anchor="middle">M</text>
+                    <line x1="2" y1="30" x2="12" y2="30" stroke="var(--accent-purple)" stroke-width="2" />
+                    <line x1="48" y1="30" x2="58" y2="30" stroke="var(--accent-purple)" stroke-width="2" />
+                    <text x="30" y="55" font-family="'Outfit', sans-serif" font-size="8" fill="var(--text-muted)" text-anchor="middle">GIRO PLUMA</text>
+                </svg>`
+            }
+        };
+
+        // DOM Elements
+        const componentModal = document.getElementById('componentModal');
+        const modalClose = document.getElementById('modalClose');
+        const modalPhysImage = document.getElementById('modalPhysImage');
+        const modalPhysFallback = document.getElementById('modalPhysFallback');
+        const modalSchemSymbol = document.getElementById('modalSchemSymbol');
+        const modalComponentBadge = document.getElementById('modalComponentBadge');
+        const modalComponentTitle = document.getElementById('modalComponentTitle');
+        const modalComponentDesc = document.getElementById('modalComponentDesc');
+        const modalSpecsGrid = document.getElementById('modalSpecsGrid');
+        const modalConnectionsList = document.getElementById('modalConnectionsList');
+        const modalContainer = componentModal.querySelector('.modal-container');
+
+        // Event Listener para componentes
+        document.querySelectorAll('.component-interactive').forEach(comp => {
+            comp.addEventListener('click', () => {
+                const compId = comp.getAttribute('data-component');
+                const data = componentData[compId];
+                if (!data) return;
+
+                // Llenar datos
+                modalComponentTitle.textContent = data.title;
+                modalComponentDesc.textContent = data.desc;
+                
+                // Configurar badge
+                modalComponentBadge.textContent = data.badge;
+                modalComponentBadge.className = 'modal-badge ' + data.badgeClass;
+
+                // Estilo dinámico de brillo según componente
+                modalContainer.style.boxShadow = `0 20px 50px rgba(0, 0, 0, 0.5), 0 0 25px ${data.glowColor}`;
+                modalContainer.style.borderColor = data.glowColor;
+
+                // Ocultar elementos de imagen por defecto
+                modalPhysImage.style.display = 'none';
+                modalPhysFallback.style.display = 'none';
+                modalPhysFallback.innerHTML = '';
+
+                // Configurar imagen física
+                if (data.image) {
+                    modalPhysImage.src = data.image;
+                    modalPhysImage.alt = data.title;
+                    modalPhysImage.style.display = 'block';
+                    
+                    // Fallback si la imagen falla (ej. no existe o error de carga)
+                    modalPhysImage.onerror = function() {
+                        modalPhysImage.style.display = 'none';
+                        modalPhysFallback.style.display = 'flex';
+                        modalPhysFallback.innerHTML = `
+                            <svg width="100" height="100" viewBox="0 0 100 100" style="filter: drop-shadow(0 0 6px ${data.glowColor});">
+                                <rect x="20" y="20" width="60" height="60" rx="8" fill="#1e293b" stroke="${data.glowColor}" stroke-width="2.5" />
+                                <rect x="35" y="35" width="30" height="30" rx="2" fill="none" stroke="${data.glowColor}" stroke-width="2" />
+                                <line x1="35" y1="42" x2="27" y2="42" stroke="${data.glowColor}" stroke-width="2" />
+                                <line x1="35" y1="50" x2="27" y2="50" stroke="${data.glowColor}" stroke-width="2" />
+                                <line x1="35" y1="58" x2="27" y2="58" stroke="${data.glowColor}" stroke-width="2" />
+                                <line x1="65" y1="42" x2="73" y2="42" stroke="${data.glowColor}" stroke-width="2" />
+                                <line x1="65" y1="50" x2="73" y2="50" stroke="${data.glowColor}" stroke-width="2" />
+                                <line x1="65" y1="58" x2="73" y2="58" stroke="${data.glowColor}" stroke-width="2" />
+                                <line x1="42" y1="35" x2="42" y2="27" stroke="${data.glowColor}" stroke-width="2" />
+                                <line x1="50" y1="35" x2="50" y2="27" stroke="${data.glowColor}" stroke-width="2" />
+                                <line x1="58" y1="35" x2="58" y2="27" stroke="${data.glowColor}" stroke-width="2" />
+                                <line x1="42" y1="65" x2="42" y2="73" stroke="${data.glowColor}" stroke-width="2" />
+                                <line x1="50" y1="65" x2="50" y2="73" stroke="${data.glowColor}" stroke-width="2" />
+                                <line x1="58" y1="65" x2="58" y2="73" stroke="${data.glowColor}" stroke-width="2" />
+                            </svg>
+                        `;
+                    };
+                } else {
+                    // Si no hay imagen, mostrar el fallback de inmediato
+                    modalPhysFallback.style.display = 'flex';
+                    modalPhysFallback.innerHTML = `
+                        <svg width="100" height="100" viewBox="0 0 100 100" style="filter: drop-shadow(0 0 6px ${data.glowColor});">
+                            <rect x="20" y="20" width="60" height="60" rx="8" fill="#1e293b" stroke="${data.glowColor}" stroke-width="2.5" />
+                            <rect x="35" y="35" width="30" height="30" rx="2" fill="none" stroke="${data.glowColor}" stroke-width="2" />
+                            <line x1="35" y1="42" x2="27" y2="42" stroke="${data.glowColor}" stroke-width="2" />
+                            <line x1="35" y1="50" x2="27" y2="50" stroke="${data.glowColor}" stroke-width="2" />
+                            <line x1="35" y1="58" x2="27" y2="58" stroke="${data.glowColor}" stroke-width="2" />
+                            <line x1="65" y1="42" x2="73" y2="42" stroke="${data.glowColor}" stroke-width="2" />
+                            <line x1="65" y1="50" x2="73" y2="50" stroke="${data.glowColor}" stroke-width="2" />
+                            <line x1="65" y1="58" x2="73" y2="58" stroke="${data.glowColor}" stroke-width="2" />
+                            <line x1="42" y1="35" x2="42" y2="27" stroke="${data.glowColor}" stroke-width="2" />
+                            <line x1="50" y1="35" x2="50" y2="27" stroke="${data.glowColor}" stroke-width="2" />
+                            <line x1="58" y1="35" x2="58" y2="27" stroke="${data.glowColor}" stroke-width="2" />
+                            <line x1="42" y1="65" x2="42" y2="73" stroke="${data.glowColor}" stroke-width="2" />
+                            <line x1="50" y1="65" x2="50" y2="73" stroke="${data.glowColor}" stroke-width="2" />
+                            <line x1="58" y1="65" x2="58" y2="73" stroke="${data.glowColor}" stroke-width="2" />
+                        </svg>
+                    `;
+                }
+
+                // Inyectar símbolo esquemático
+                modalSchemSymbol.innerHTML = data.symbol;
+
+                // Inyectar especificaciones
+                modalSpecsGrid.innerHTML = '';
+                data.specs.forEach(spec => {
+                    const item = document.createElement('div');
+                    item.className = 'spec-item';
+                    item.innerHTML = `
+                        <span class="spec-label">${spec.label}</span>
+                        <span class="spec-value">${spec.value}</span>
+                    `;
+                    modalSpecsGrid.appendChild(item);
+                });
+
+                // Inyectar conexiones
+                modalConnectionsList.innerHTML = '';
+                data.connections.forEach(conn => {
+                    const li = document.createElement('li');
+                    li.textContent = conn;
+                    modalConnectionsList.appendChild(li);
+                });
+
+                // Abrir modal
+                componentModal.classList.add('active');
+            });
+        });
+
+        // Funciones para cerrar modal
+        function closeModal() {
+            componentModal.classList.remove('active');
+            setTimeout(() => {
+                modalPhysImage.src = '';
+                modalPhysImage.style.display = 'none';
+                modalPhysFallback.style.display = 'none';
+                modalPhysFallback.innerHTML = '';
+            }, 400);
+        }
+
+        modalClose.addEventListener('click', closeModal);
+
+        componentModal.addEventListener('click', (e) => {
+            if (e.target === componentModal) {
+                closeModal();
+            }
+        });
+
+        // Cerrar con tecla Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && componentModal.classList.contains('active')) {
+                closeModal();
             }
         });
     </script>
