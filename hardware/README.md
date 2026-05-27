@@ -1,12 +1,28 @@
 # Sistema de Control Híbrido para Grúa Torre (ESP32 + Arduino Nano)
 
-Este proyecto desarrolla una solución de control para una grúa torre industrial a escala, integrando una arquitectura de doble procesador para la gestión de actuadores y la interfaz de usuario remota.
+Este proyecto desarrolla una solución mecatrónica para el control automatizado de una grúa torre a escala, integrando una arquitectura de doble procesador para la gestión de actuadores y una interfaz de usuario remota vía red inalámbrica.
 
-## Arquitectura del Sistema
-- **Unidad de Servidor (ESP32 DevKit V1):** Gestiona la infraestructura de red mediante un servidor web asíncrono (`uasyncio`), operando bajo un Punto de Acceso (AP) dedicado.
-- **Unidad de Control (Arduino Nano):** Gestiona la cinemática de los actuadores (motores DC y motor paso a paso) mediante el parseo de comandos seriales (UART).
+## 1. Requisitos del Proyecto
+- **Control de Actuadores:** Gestión de dos motores DC (N20) y un motor paso a paso (Nema 17) mediante drivers TB6612FNG y DRV8825.
+- **Control Dual:** Implementación de lógica de prioridad que permite alternar entre mandos manuales locales (joysticks) y remotos (web).
+- **Arquitectura de Procesamiento:** - **ESP32 DevKit V1:** Servidor web asíncrono en MicroPython.
+    - **Arduino Nano:** Ejecución de control de potencia y cinemática en tiempo real.
+- **Seguridad:** Protocolo de "hombre muerto" mediante *watchdog* por software, forzando estado de reposo ('S') ante pérdida de enlace.
+- **Comunicación:** Enlace UART asíncrono (9600 bps) entre procesadores.
 
-## Características Técnicas
-- **Control Dual:** Sistema de operación concurrente que permite la entrada de comandos remotos (vía web) y manuales (vía joysticks físicos).
-- **Seguridad Industrial:** Implementación de un mecanismo de *watchdog* (timeout de seguridad) que garantiza la detención inmediata de los actuadores ante la pérdida del enlace inalámbrico.
-- **Eficiencia:** Comunicación serial de baja latencia a 9600 bps y procesamiento no bloqueante en ambos microcontroladores.
+## 2. Task Log (Estado de Implementación)
+La siguiente tabla resume el progreso y la validación de las tareas críticas del sistema:
+
+| Tarea | Descripción | Estado |
+| :--- | :--- | :--- |
+| **Tarea 1** | Firmware Arduino (Control, PWM, Step, UART) | [x] |
+| **Tarea 2** | Firmware ESP32 (uasyncio, Server, UART) | [x] |
+| **Tarea 3** | Interfaz Web (Diseño, Fetch API, Táctil) | [x] |
+| **Tarea 4** | Documentación Técnica (OpenSpec) | [x] |
+| **Tarea 5** | Planos y Diseño de Hardware | [x] |
+| **Tarea 6** | Integración y Pruebas de Seguridad | [ ] |
+
+## 3. Guía de Operación
+1. **Red:** El sistema genera el AP `Grua_Torre_Politecnica`.
+2. **Interfaz:** Acceder a `192.168.4.1` desde un navegador móvil.
+3. **Prioridad:** Los comandos vía web anulan los joysticks físicos hasta que el estado web retorne a 'S'.

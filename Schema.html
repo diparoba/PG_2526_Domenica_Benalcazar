@@ -29,6 +29,7 @@
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
+            transition: background-color 0.5s ease, color 0.5s ease;
         }
 
         h1 {
@@ -71,6 +72,7 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             display: flex;
             flex-direction: column;
+            transition: background-color 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
         }
 
         .card h2 {
@@ -95,7 +97,31 @@
             border-radius: 12px;
             padding: 10px;
             border: 1px solid #1e293b;
+            position: relative;
+            overflow: hidden;
+            transition: background 0.5s ease, border-color 0.5s ease;
         }
+
+        /* Efecto scan-line tipo monitor técnico */
+        @keyframes scanline {
+            0% { top: -100%; }
+            100% { top: 100%; }
+        }
+
+        .svg-container::after {
+            content: '';
+            position: absolute;
+            top: -100%;
+            left: 0;
+            width: 100%;
+            height: 50%;
+            background: linear-gradient(to bottom, transparent 0%, rgba(56, 189, 248, 0.03) 50%, transparent 100%);
+            pointer-events: none;
+            animation: scanline 6s linear infinite;
+            z-index: 1;
+        }
+
+        body.light-mode .svg-container::after { display: none; }
 
         svg {
             min-width: 600px;
@@ -127,13 +153,18 @@
             stroke-width: 3;
             stroke-linecap: round;
             stroke-linejoin: round;
-            transition: stroke-width 0.2s, stroke 0.3s;
+            transition: stroke-width 0.3s, stroke 0.3s, opacity 0.3s;
             cursor: pointer;
         }
 
         .connection-wire:hover {
             stroke-width: 5;
             filter: drop-shadow(0 0 6px currentColor);
+        }
+
+        /* Atenuar cables cuando uno está activo */
+        .connection-wire.dimmed {
+            opacity: 0.15;
         }
 
         /* Colores por función de cable */
@@ -199,6 +230,12 @@
             margin-top: 15px;
             font-size: 0.85rem;
             border: 1px solid #1e293b;
+            transition: border-color 0.3s ease, background-color 0.5s ease, box-shadow 0.3s ease;
+        }
+
+        .info-panel.active {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.15);
         }
 
         .info-title {
@@ -221,6 +258,29 @@
             gap: 8px;
             font-size: 0.75rem;
             color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px 10px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .legend-item:hover {
+            background: rgba(255,255,255,0.08);
+            transform: translateY(-1px);
+        }
+
+        .legend-item.active {
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--text-light);
+        }
+
+        body.light-mode .legend-item:hover {
+            background: rgba(0,0,0,0.05);
+        }
+
+        body.light-mode .legend-item.active {
+            background: rgba(59, 130, 246, 0.12);
         }
 
         .legend-color {
@@ -228,9 +288,61 @@
             height: 14px;
             border-radius: 3px;
         }
+        /* LIGHT MODE OVERRIDES */
+        body.light-mode {
+            --bg-dark: #f8fafc;
+            --panel-bg: #ffffff;
+            --text-light: #0f172a;
+            --text-muted: #475569;
+        }
+        body.light-mode .card { border-color: #cbd5e1; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        body.light-mode .svg-container { background: #f1f5f9; border-color: #cbd5e1; }
+        body.light-mode .info-panel { background: #f1f5f9; border-color: #cbd5e1; }
+        body.light-mode th { background-color: #e2e8f0; color: #1e293b; border-color: #cbd5e1; }
+        body.light-mode td { border-color: #e2e8f0; color: #334155; }
+        body.light-mode .component-box { fill: #e2e8f0; stroke: #94a3b8; }
+        body.light-mode .component-title { fill: #0f172a; }
+        
+        #theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            background: var(--panel-bg);
+            color: var(--text-light);
+            cursor: pointer;
+            z-index: 1000;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+        body.light-mode #theme-toggle {
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        #theme-toggle:hover {
+            transform: translateY(-2px);
+            background: var(--accent-yellow);
+            color: #000;
+        }
+
+        /* Colores específicos para Motores y Fuente */
+        .box-power { fill: #1e1b4b; stroke: #4338ca; }
+        .box-motor-car { fill: #0f172a; stroke: #3b82f6; }
+        .box-motor-elev { fill: #0f172a; stroke: #10b981; }
+        .box-motor-giro { fill: #0f172a; stroke: #8b5cf6; }
+
+        body.light-mode .box-power { fill: #e0e7ff; stroke: #4338ca; }
+        body.light-mode .box-motor-car { fill: #dbeafe; stroke: #3b82f6; }
+        body.light-mode .box-motor-elev { fill: #d1fae5; stroke: #10b981; }
+        body.light-mode .box-motor-giro { fill: #ede9fe; stroke: #8b5cf6; }
     </style>
 </head>
 <body>
+    <button id="theme-toggle">Tema Claro</button>
 
     <h1>Esquema de Conexiones Electrónicas</h1>
     <div class="subtitle">
@@ -262,7 +374,7 @@
             <div class="svg-container">
                 <svg width="820" height="600" viewBox="0 0 820 600">
                     <!-- FUENTE DE ALIMENTACION -->
-                    <rect x="350" y="15" width="120" height="55" rx="6" class="component-box" style="fill: #1e1b4b; stroke: #4338ca;"/>
+                    <rect x="350" y="15" width="120" height="55" rx="6" class="component-box box-power"/>
                     <text x="410" y="30" class="component-title" style="font-size: 10px;">FUENTE DE POTENCIA</text>
                     <text x="410" y="45" class="component-title" style="font-size: 9px; fill: var(--accent-orange);">12V DC</text>
                     <text x="360" y="63" class="pin-label">+12V</text>
@@ -350,19 +462,19 @@
                     <text x="530" y="390" class="pin-label">CO2</text>
 
                     <!-- MOTOR CARRO -->
-                    <rect x="670" y="100" width="110" height="70" rx="6" class="component-box" style="fill: #0f172a; stroke: #3b82f6;"/>
+                    <rect x="670" y="100" width="110" height="70" rx="6" class="component-box box-motor-car"/>
                     <text x="725" y="125" class="component-title">MOTOR CARRO</text>
                     <text x="680" y="150" class="pin-label">M1+</text>
                     <text x="760" y="150" class="pin-label" text-anchor="end">M1-</text>
 
                     <!-- MOTOR ELEVACION -->
-                    <rect x="670" y="200" width="110" height="70" rx="6" class="component-box" style="fill: #0f172a; stroke: #10b981;"/>
+                    <rect x="670" y="200" width="110" height="70" rx="6" class="component-box box-motor-elev"/>
                     <text x="725" y="225" class="component-title">MOTOR ELEVACIÓN</text>
                     <text x="680" y="250" class="pin-label">M2+</text>
                     <text x="760" y="250" class="pin-label" text-anchor="end">M2-</text>
 
                     <!-- MOTOR GIRO -->
-                    <rect x="670" y="370" width="110" height="70" rx="6" class="component-box" style="fill: #0f172a; stroke: #8b5cf6;"/>
+                    <rect x="670" y="370" width="110" height="70" rx="6" class="component-box box-motor-giro"/>
                     <text x="725" y="395" class="component-title">MOTOR GIRO</text>
                     <text x="680" y="420" class="pin-label">M3+</text>
                     <text x="760" y="420" class="pin-label" text-anchor="end">M3-</text>
@@ -611,21 +723,80 @@
         const wires = document.querySelectorAll('.connection-wire');
         const wireName = document.getElementById('wireName');
         const wireDesc = document.getElementById('wireDesc');
+        const infoPanel = document.querySelector('.info-panel');
 
+        // EFECTO: Atenuar otros cables al hacer hover
         wires.forEach(wire => {
             wire.addEventListener('mouseenter', () => {
                 const name = wire.getAttribute('data-wire');
                 const info = wire.getAttribute('data-info');
-                wireName.textContent = name;
-                wireDesc.textContent = info;
-                wireName.style.color = window.getComputedStyle(wire).stroke;
+                if (name) {
+                    wireName.textContent = name;
+                    wireDesc.textContent = info;
+                    wireName.style.color = window.getComputedStyle(wire).stroke;
+                    infoPanel.classList.add('active');
+                }
+                // Atenuar todos los demas cables
+                wires.forEach(w => {
+                    if (w !== wire) w.classList.add('dimmed');
+                });
             });
 
             wire.addEventListener('mouseleave', () => {
-                wireName.textContent = "Pasa el cursor por encima de una conexión...";
-                wireDesc.textContent = "Haz hover sobre cualquiera de las líneas coloreadas en el diagrama para ver la información técnica de la conexión electrónica correspondiente.";
+                wireName.textContent = "Pasa el cursor por encima de una conexion...";
+                wireDesc.textContent = "Haz hover sobre cualquiera de las lineas coloreadas en el diagrama para ver la informacion tecnica de la conexion electronica correspondiente.";
                 wireName.style.color = "var(--accent-yellow)";
+                infoPanel.classList.remove('active');
+                // Restaurar todos los cables
+                wires.forEach(w => w.classList.remove('dimmed'));
             });
+        });
+
+        // LEYENDA INTERACTIVA: clic para resaltar tipo de cable
+        const legendItems = document.querySelectorAll('.legend-item');
+        const wireClassMap = {
+            0: 'wire-vcc-logic',
+            1: 'wire-vcc-power',
+            2: 'wire-gnd',
+            3: 'wire-uart',
+            4: 'wire-signal-a',
+            5: 'wire-signal-b',
+            6: 'wire-signal-c',
+            7: 'wire-btn'
+        };
+        let activeFilter = null;
+
+        legendItems.forEach((item, index) => {
+            item.addEventListener('click', () => {
+                const wireClass = wireClassMap[index];
+                if (activeFilter === wireClass) {
+                    activeFilter = null;
+                    item.classList.remove('active');
+                    wires.forEach(w => w.classList.remove('dimmed'));
+                } else {
+                    activeFilter = wireClass;
+                    legendItems.forEach(li => li.classList.remove('active'));
+                    item.classList.add('active');
+                    wires.forEach(w => {
+                        if (w.classList.contains(wireClass)) {
+                            w.classList.remove('dimmed');
+                        } else {
+                            w.classList.add('dimmed');
+                        }
+                    });
+                }
+            });
+        });
+
+        // LOGICA DEL BOTON DE CAMBIO DE TEMA
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        themeToggleBtn.addEventListener('click', () => {
+            document.body.classList.toggle('light-mode');
+            if (document.body.classList.contains('light-mode')) {
+                themeToggleBtn.textContent = 'Tema Oscuro';
+            } else {
+                themeToggleBtn.textContent = 'Tema Claro';
+            }
         });
     </script>
 </body>

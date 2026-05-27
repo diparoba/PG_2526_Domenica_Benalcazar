@@ -1,64 +1,53 @@
-﻿# Proyecto Grúa Torre: Requerimientos Técnicos
+# Requisitos Técnicos para la Grúa Torre
 
-## Contexto del Proyecto
-Este proyecto implementa un sistema de control dual para una grúa torre a escala. El Arduino Nano lee joysticks locales y comandos remotos, mezcla ambas intenciones y controla dos motores DC y un motor paso a paso. El ESP32 sirve una interfaz web táctil y transmite los comandos al Arduino por UART.
+## Resumen del Sistema
+- **Control Dual**: Manual vía Joysticks y remoto vía web.
+- **Comunicación**: UART (9600 bps) entre ESP32 (servidor web) y Arduino Nano (control de motores).
 
-## 1. Arquitectura de Hardware y Pines
+## Hardware
+- **Arduino Nano**: Controlador principal de los motores.
+  - *Drivers*: TB6612FNG (motores DC N20) y DRV8825 (motor paso a paso NEMA 17).
+  - *Sensores*: Joysticks en ejes X, Y, Z (pines A0, A1, A2).
+- **ESP32**: Servidor Wi‑Fi y puente UART.
+  - *Wi‑Fi*: SSID y contraseña configurables en `boot.py`.
+  - *UART*: TX0 ↔ RX0, 9600 bps.
 
-### Arduino Nano (Actuador Principal)
-- **Framework**: Arduino / C++
-- **Responsabilidad**: Leer joysticks, interpretar comandos UART y manejar los drivers de potencia.
-- **Asignación de Pines**:
-  - **Joysticks**:
-    - Carro (X) -> A0
-    - Elevación (Y) -> A1
-    - Giro (Z) -> A2
-  - **Driver TB6612FNG (Motores DC)**:
-    - Motor A (Carro): AIN1 = D2, AIN2 = D4, PWMA = D3
-    - Motor B (Elevación): BIN1 = D7, BIN2 = D8, PWMB = D5
-  - **Driver DRV8825 (Stepper para giro)**:
-    - STEP = D9
-    - DIR = D10
-  - **Comunicación Serial**:
-    - RX del Nano = conexión desde TX del ESP32
+## Pines Arduino Nano
+| Función | Pin |
+|---|---|
+| Joystick X | A0 |
+| Joystick Y | A1 |
+| Joystick Z (giro) | A2 |
+| Motor DC IN1 | 2 |
+| Motor DC IN2 | 3 |
+| Motor DC PWM | 5 |
+| Stepper DIR | 6 |
+| Stepper STEP | 7 |
+| Stepper EN (DRV8825) | 8 |
+| UART RX (recepción de ESP32) | 10 |
+| UART TX (envío a ESP32) | 11 |
 
-### ESP32 (Interfaz Web / Control de Red)
-- **Framework**: MicroPython
-- **Responsabilidad**: Servir la página web, recibir comandos del navegador y enviarlos por UART al Arduino.
-- **Asignación de Pines**:
-  - UART TX = GPIO 17 (hacia RX del Nano)
-  - UART RX = GPIO 16 (si se usa enlace bidireccional)
-  - LED de estado = GPIO 2
+## Comunicación UART
+- **Comandos desde ESP32 → Arduino** (un solo carácter):
+  - `F` – Mover carro adelante.
+  - `B` – Mover carro atrás.
+  - `U` – Elevar.
+  - `D` – Bajar.
+  - `L` – Girar izquierda.
+  - `R` – Girar derecha.
+  - `S` – STOP (detener todos los motores).
+- **Respuestas Arduino → ESP32** (opcional, para depuración):
+  - `OK` – comando ejecutado.
+  - `ERR` – error.
 
-## 2. Funcionalidad de Software
+## Seguridad
+- Timeout de 200 ms: si no se recibe un comando continuo, el Arduino debe ejecutar `S`.
+- PWM limitado a 255 (full speed) y a 0 (detenido).
 
-### Firmware Arduino (`grua_arduino/grua_arduino.ino`)
-- Lee los tres ejes del joystick analógico.
-- Controla dos motores DC con PWM y un motor paso a paso con `AccelStepper`.
-- Recibe comandos seriales de una sola letra desde el ESP32: `F`, `B`, `U`, `D`, `L`, `R`, `S`.
-- Mantiene una intención web separada y suma la intención del joystick a la intención remota.
-- Implementa un timeout de seguridad de 500 ms que reinicia las intenciones web si no llegan comandos nuevos.
+## Software
+- **Arduino (C++)**: Lectura de joysticks, generación local de comandos y parser UART.
+- **ESP32 (MicroPython)**: Conexión Wi‑Fi, servidor HTTP, UI web, envío de comandos UART.
 
-### Firmware ESP32 (`esp32_server`)
-- `boot.py`: menú de arranque interactivo, conectividad WiFi y modo REPL.
-- `main.py`: servidor AP/híbrido con lectura de controles físicos de respaldo y manejo de comandos web.
-- `telemetry.py`: servidor web asíncrono que expone `/`, `/api/command?cmd=` y `/api/telemetry`.
-- `index.html`: interfaz de control remota con dos joysticks táctiles y botón de parada de emergencia.
-
-## 3. Requisitos Clave
-- **Comunicación UART**: 9600 bps, 8N1.
-- **Comandos válidos**: `F`, `B`, `U`, `D`, `L`, `R`, `S`.
-- **Seguridad**: Si no se recibe un comando web en 500 ms, el Arduino debe regresar a `S`.
-- **Interfaz Web**: Control táctil, visualización minimalista y soporte para dispositivos móviles.
-
-## 4. Resultados Esperados
-- El Arduino debe poder mover el carro, subir/bajar el gancho y girar la pluma.
-- El ESP32 debe servir la página remota y transmitir comandos válidos por UART.
-- El sistema debe soportar control local por joystick y control remoto por navegador.
-
-## 5. Archivos Principales
-- `grua_arduino/grua_arduino.ino`
-- `esp32_server/boot.py`
-- `esp32_server/main.py`
-- `esp32_server/telemetry.py`
-- `esp32_server/index.html`
+## UI Web
+- Botones para cada movimiento con eventos `mousedown`/`touchstart` → envío de comando, `mouseup`/`touchend` → envío de `S`.
+- Diseño responsivo, modo claro/oscuro, tipografía *Outfit*.
