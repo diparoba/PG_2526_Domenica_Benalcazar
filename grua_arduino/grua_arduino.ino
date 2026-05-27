@@ -1,5 +1,3 @@
-#include <AccelStepper.h>
-
 // Definición de pines - Joysticks
 #define JOY_X_PIN A0    // Carro
 #define JOY_Y_PIN A1    // Elevación
@@ -15,23 +13,31 @@
 #define BIN2_PIN 8
 #define PWMB_PIN 5
 
-// Definición de pines - Motor a Pasos (Giro) DRV8825
-#define STEP_PIN 9
-#define DIR_PIN 10
+// Definición de pines - Motor C (Giro) TB6612FNG (Canal A/B del segundo puente H)
+#define CIN1_PIN 9
+#define CIN2_PIN 10
+#define PWMC_PIN 6
 
-// Parámetros del motor a pasos
-#define MAX_STEPPER_SPEED 1000.0
-#define STEPPER_ACCEL 500.0
+// Botón de Modo
+#define JOY_BTN_PIN 11
 
-// Instancia de AccelStepper
-AccelStepper stepper(AccelStepper::DRIVER, STEP_PIN, DIR_PIN);
+// Parámetros de velocidad máxima configurable
+#define MAX_VEL_CARRO 255
+#define MAX_VEL_ELEVACION 255
+#define MAX_VEL_GIRO 255
 
 // Variables de intención web
 int webCarro = 0;
 int webElevacion = 0;
-float webGiro = 0.0;
+int webGiro = 0;
 unsigned long lastWebCmdTime = 0;
 const unsigned long WEB_TIMEOUT_MS = 500; // Timeout de 500ms para seguridad
+
+// Estado del modo de control (false = Manual/Joystick, true = Web)
+bool modoControlWeb = false;
+unsigned long lastBtnPressTime = 0;
+const unsigned long DEBOUNCE_MS = 50;
+bool lastBtnState = HIGH;
 
 void setup() {
   // Inicialización de comunicación serial
@@ -46,9 +52,12 @@ void setup() {
   pinMode(BIN2_PIN, OUTPUT);
   pinMode(PWMB_PIN, OUTPUT);
 
-  // Configuración inicial de AccelStepper
-  stepper.setMaxSpeed(MAX_STEPPER_SPEED);
-  stepper.setAcceleration(STEPPER_ACCEL);
+  pinMode(CIN1_PIN, OUTPUT);
+  pinMode(CIN2_PIN, OUTPUT);
+  pinMode(PWMC_PIN, OUTPUT);
+
+  // Configuración de botón físico
+  pinMode(JOY_BTN_PIN, INPUT_PULLUP);
 }
 
 // Función auxiliar para leer y mapear el joystick con zona muerta
@@ -68,7 +77,7 @@ int readJoystick(int pin, int maxVal) {
 
 // Función para controlar el Motor A (Carro)
 void controlMotorA(int speed) {
-  speed = constrain(speed, -255, 255);
+  speed = constrain(speed, -MAX_VEL_CARRO, MAX_VEL_CARRO);
   if (speed == 0) {
     digitalWrite(AIN1_PIN, LOW);
     digitalWrite(AIN2_PIN, LOW);
@@ -86,7 +95,7 @@ void controlMotorA(int speed) {
 
 // Función para controlar el Motor B (Elevación)
 void controlMotorB(int speed) {
-  speed = constrain(speed, -255, 255);
+  speed = constrain(speed, -MAX_VEL_ELEVACION, MAX_VEL_ELEVACION);
   if (speed == 0) {
     digitalWrite(BIN1_PIN, LOW);
     digitalWrite(BIN2_PIN, LOW);
@@ -102,64 +111,103 @@ void controlMotorB(int speed) {
   }
 }
 
+// Función para controlar el Motor C (Giro)
+void controlMotorC(int speed) {
+  speed = constrain(speed, -MAX_VEL_GIRO, MAX_VEL_GIRO);
+  if (speed == 0) {
+    digitalWrite(CIN1_PIN, LOW);
+    digitalWrite(CIN2_PIN, LOW);
+    analogWrite(PWMC_PIN, 0);
+  } else if (speed > 0) {
+    digitalWrite(CIN1_PIN, HIGH);
+    digitalWrite(CIN2_PIN, LOW);
+    analogWrite(PWMC_PIN, speed);
+  } else {
+    digitalWrite(CIN1_PIN, LOW);
+    digitalWrite(CIN2_PIN, HIGH);
+    analogWrite(PWMC_PIN, -speed);
+  }
+}
+
 void processUART() {
   if (Serial.available() > 0) {
     char cmd = Serial.read();
     
-    // Si recibimos un comando válido, actualizamos el tiempo del último comando
+    // Si recibimos un comando de movimiento válido, actualizamos el tiempo del último comando
     if (cmd == 'F' || cmd == 'B' || cmd == 'U' || cmd == 'D' || cmd == 'L' || cmd == 'R' || cmd == 'S') {
       lastWebCmdTime = millis();
     }
     
-    // Limpiamos intenciones si es comando de movimiento, para no mezclar direcciones contradictorias de la web
     switch (cmd) {
-      case 'F': webCarro = 255; break;
-      case 'B': webCarro = -255; break;
-      case 'U': webElevacion = 255; break;
-      case 'D': webElevacion = -255; break;
-      case 'L': webGiro = -MAX_STEPPER_SPEED; break;
-      case 'R': webGiro = MAX_STEPPER_SPEED; break;
+      case 'F': webCarro = MAX_VEL_CARRO; break;
+      case 'B': webCarro = -MAX_VEL_CARRO; break;
+      case 'U': webElevacion = MAX_VEL_ELEVACION; break;
+      case 'D': webElevacion = -MAX_VEL_ELEVACION; break;
+      case 'L': webGiro = -MAX_VEL_GIRO; break;
+      case 'R': webGiro = MAX_VEL_GIRO; break;
       case 'S': 
         webCarro = 0; 
         webElevacion = 0; 
-        webGiro = 0.0; 
+        webGiro = 0; 
+        break;
+      case 'W':
+        if (!modoControlWeb) {
+          modoControlWeb = true;
+          Serial.write('W');
+        }
+        break;
+      case 'M':
+        if (modoControlWeb) {
+          modoControlWeb = false;
+          Serial.write('M');
+        }
         break;
     }
   }
 
-  // Timeout de seguridad web
-  if (millis() - lastWebCmdTime > WEB_TIMEOUT_MS) {
+  // Timeout de seguridad web: solo se aplica si está en modo Web
+  if (modoControlWeb && (millis() - lastWebCmdTime > WEB_TIMEOUT_MS)) {
     webCarro = 0;
     webElevacion = 0;
-    webGiro = 0.0;
+    webGiro = 0;
   }
 }
 
 void loop() {
-  // Procesar comandos de la interfaz web
+  // Procesar comandos de la interfaz web / serial
   processUART();
 
-  // Leer intenciones del joystick
-  int joyCarro = readJoystick(JOY_X_PIN, 255);
-  int joyElevacion = readJoystick(JOY_Y_PIN, 255);
-  int joyGiro = readJoystick(JOY_Z_PIN, MAX_STEPPER_SPEED);
+  // Leer estado del botón de joystick con antirrebote (Debounce)
+  bool btnState = digitalRead(JOY_BTN_PIN);
+  if (btnState != lastBtnState) {
+    if (millis() - lastBtnPressTime > DEBOUNCE_MS) {
+      if (btnState == LOW) { // Botón pulsado (flanco de bajada)
+        modoControlWeb = !modoControlWeb;
+        // Enviar nuevo estado por UART
+        Serial.write(modoControlWeb ? 'W' : 'M');
+        
+        // Parar motores al cambiar de modo para evitar movimientos bruscos
+        webCarro = 0; webElevacion = 0; webGiro = 0;
+      }
+      lastBtnPressTime = millis();
+    }
+    lastBtnState = btnState;
+  }
 
-  // Lógica mixta: Suma de intención joystick + intención web
-  int velCarroFinal = joyCarro + webCarro;
-  int velElevacionFinal = joyElevacion + webElevacion;
-  float velGiroFinal = (float)joyGiro + webGiro;
-
-  // Ejecutar movimientos
-  controlMotorA(velCarroFinal);
-  controlMotorB(velElevacionFinal);
-
-  // Control del Stepper (Giro)
-  velGiroFinal = constrain(velGiroFinal, -MAX_STEPPER_SPEED, MAX_STEPPER_SPEED);
-  if (abs(velGiroFinal) > 0) {
-    stepper.setSpeed(velGiroFinal);
-    stepper.runSpeed();
+  // Ejecución de movimientos según el modo activo
+  if (modoControlWeb) {
+    // Modo Web: Ejecutar comandos web
+    controlMotorA(webCarro);
+    controlMotorB(webElevacion);
+    controlMotorC(webGiro);
   } else {
-    stepper.setSpeed(0);
-    stepper.stop();
+    // Modo Manual: Leer e intencionar joystick físico local
+    int joyCarro = readJoystick(JOY_X_PIN, MAX_VEL_CARRO);
+    int joyElevacion = readJoystick(JOY_Y_PIN, MAX_VEL_ELEVACION);
+    int joyGiro = readJoystick(JOY_Z_PIN, MAX_VEL_GIRO);
+
+    controlMotorA(joyCarro);
+    controlMotorB(joyElevacion);
+    controlMotorC(joyGiro);
   }
 }

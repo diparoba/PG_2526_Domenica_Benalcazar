@@ -14,6 +14,7 @@ import uselect
 LED = Pin(2, Pin.OUT)
 # UART1 con TX=17 y RX=16 para enviar comandos directos a los motores en el Arduino
 uart = UART(1, baudrate=9600, tx=17, rx=16)
+modo_control_web = False
 
 def get_html():
     try:
@@ -24,6 +25,10 @@ def get_html():
 
 def send_uart_command(cmd):
     """Manda la letra de acción directo al Arduino de la maqueta"""
+    global modo_control_web
+    if not modo_control_web and cmd != 'S':
+        # En modo manual, no enviamos comandos de movimiento ordinarios
+        return
     try:
         uart.write(cmd)
         print(f"\n[UART] Mandado a motores: {cmd}")
@@ -84,6 +89,43 @@ async def handle_client(reader, writer):
             await writer.drain()
             sys.stdout.write("Escribe un comando manual: ")
 
+        elif request_line.startswith('GET /api/status'):
+            try:
+                logs_text = ""
+                try:
+                    logs_text = telemetry.read_all()
+                except Exception:
+                    pass
+                status_data = {"mode": "web" if modo_control_web else "manual", "logs": logs_text.split('\n')}
+                response = 'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nConnection: close\r\n\r\n' + json.dumps(status_data)
+            except Exception as ex:
+                response = 'HTTP/1.1 500 Internal Error\r\nConnection: close\r\n\r\n'
+            writer.write(response.encode('utf-8'))
+            await writer.drain()
+            sys.stdout.write("Escribe un comando manual: ")
+
+        elif request_line.startswith('GET /api/mode?set='):
+            mode_param = request_line.split('set=')[1].split(' ')[0].strip()
+            if mode_param == "web":
+                modo_control_web = True
+                try:
+                    uart.write(b"W")
+                    telemetry.log_event('mode_change', {'mode': 'web', 'source': 'web_api'})
+                except Exception:
+                    pass
+            elif mode_param == "manual":
+                modo_control_web = False
+                try:
+                    uart.write(b"M")
+                    telemetry.log_event('mode_change', {'mode': 'manual', 'source': 'web_api'})
+                except Exception:
+                    pass
+            status_data = {"status": "ok", "mode": "web" if modo_control_web else "manual"}
+            response = 'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nConnection: close\r\n\r\n' + json.dumps(status_data)
+            writer.write(response.encode('utf-8'))
+            await writer.drain()
+            sys.stdout.write("Escribe un comando manual: ")
+
         elif request_line.startswith('GET /api/telemetry'):
             try:
                 logs = telemetry.read_all()
@@ -132,6 +174,31 @@ async def escuchar_consola():
         
         await asyncio.sleep_ms(80)
 
+async def leer_uart():
+    global modo_control_web
+    while True:
+        if uart.any() > 0:
+            try:
+                data = uart.read(1).decode('utf-8')
+                if data == 'W':
+                    modo_control_web = True
+                    print("\n[UART] Modo cambiado a WEB (físico)")
+                    try:
+                        telemetry.log_event('mode_change', {'mode': 'web', 'source': 'physical'})
+                    except Exception:
+                        pass
+                elif data == 'M':
+                    modo_control_web = False
+                    print("\n[UART] Modo cambiado a MANUAL (físico)")
+                    try:
+                        telemetry.log_event('mode_change', {'mode': 'manual', 'source': 'physical'})
+                    except Exception:
+                        pass
+                sys.stdout.write("Escribe un comando manual: ")
+            except Exception as e:
+                print("Error leyendo UART:", e)
+        await asyncio.sleep_ms(50)
+
 async def main():
     print("\n" + "="*45)
     print("      SISTEMA ASÍNCRONO DE GRÚA - ACTIVO")
@@ -143,6 +210,7 @@ async def main():
     print("-" * 45)
     
     asyncio.create_task(escuchar_consola())
+    asyncio.create_task(leer_uart())
     
     while True:
         await asyncio.sleep(1)
