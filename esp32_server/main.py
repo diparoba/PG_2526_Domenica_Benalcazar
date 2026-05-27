@@ -14,6 +14,7 @@ adc_carro = ADC(Pin(6)); adc_carro.atten(ADC.ATTEN_11DB)
 logs = ["Sistema Híbrido Iniciado"]
 comando_web = 'S'
 ultimo_comando_enviado = 'S'
+modo_control_web = False
 
 # 2. Funciones de Telemetría
 def log_event(msg):
@@ -36,33 +37,67 @@ def leer_mandos_fisicos():
 
 # 4. Servidor Web Asíncrono
 async def handle_client(reader, writer):
-    global comando_web
-    request = (await reader.readline()).decode('utf-8')
-    while await reader.readline() != b'\r\n': pass
+    global comando_web, modo_control_web
+    try:
+        request = (await reader.readline()).decode('utf-8')
+        while await reader.readline() != b'\r\n': pass
 
-    if "/api/command?cmd=" in request:
-        comando_web = request.split("cmd=")[1][0]
-        writer.write(b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nOK")
-    elif "/api/logs" in request:
-        writer.write(b"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n" + ujson.dumps(logs).encode())
-    else:
-        with open('index.html', 'r') as f:
-            writer.write(b"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n" + f.read().encode())
-    await writer.drain()
-    writer.close()
+        if "/api/command?cmd=" in request:
+            comando_web = request.split("cmd=")[1][0]
+            writer.write(b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nOK")
+        elif "/api/status" in request:
+            status_data = {"mode": "web" if modo_control_web else "manual", "logs": logs}
+            writer.write(b"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n" + ujson.dumps(status_data).encode())
+        elif "/api/mode?set=" in request:
+            mode_param = request.split("set=")[1].split(" ")[0].strip()
+            if mode_param == "web":
+                modo_control_web = True
+                uart.write(b"W")
+                log_event("Modo: WEB (remoto)")
+            elif mode_param == "manual":
+                modo_control_web = False
+                uart.write(b"M")
+                log_event("Modo: MANUAL (remoto)")
+            status_data = {"status": "ok", "mode": "web" if modo_control_web else "manual"}
+            writer.write(b"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n" + ujson.dumps(status_data).encode())
+        elif "/api/logs" in request:
+            writer.write(b"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n" + ujson.dumps(logs).encode())
+        else:
+            with open('index.html', 'r') as f:
+                writer.write(b"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n" + f.read().encode())
+    except Exception as e:
+        print("Error handle_client:", e)
+    finally:
+        await writer.drain()
+        writer.close()
 
 # 5. Bucle de Control Híbrido (El corazón del sistema)
 async def control_loop():
-    global ultimo_comando_enviado
+    global ultimo_comando_enviado, modo_control_web
     while True:
-        # Prioridad: Si Web no está en 'S', usamos Web. Si Web es 'S', usamos físico.
+        # 1. Leer UART entrante para detectar cambios de modo desde el Arduino Nano
+        if uart.any() > 0:
+            try:
+                data = uart.read(1).decode('utf-8')
+                if data == 'W':
+                    modo_control_web = True
+                    log_event("Modo: WEB (físico)")
+                elif data == 'M':
+                    modo_control_web = False
+                    log_event("Modo: MANUAL (físico)")
+            except Exception as e:
+                print("Error leyendo UART:", e)
+
+        # 2. Prioridad de comandos
         cmd_a_enviar = comando_web if comando_web != 'S' else (leer_mandos_fisicos() or 'S')
         
-        if cmd_a_enviar != ultimo_comando_enviado:
-            uart.write(cmd_a_enviar)
-            log_event(f"Estado: {cmd_a_enviar}")
-            ultimo_comando_enviado = cmd_a_enviar
-            
+        # Enviar comandos si modo Web está activo O si es una parada de emergencia ('S')
+        if modo_control_web or cmd_a_enviar == 'S':
+            if cmd_a_enviar != ultimo_comando_enviado:
+                uart.write(cmd_a_enviar)
+                log_event(f"Estado: {cmd_a_enviar}")
+                ultimo_comando_enviado = cmd_a_enviar
+        
         await asyncio.sleep(0.05) # Ciclo de 50ms (muy rápido y estable)
 
 # 6. Ejecución
