@@ -1,3 +1,5 @@
+#include <SoftwareSerial.h>
+
 // Definición de pines - Joysticks
 #define JOY_X_PIN A0    // Carro
 #define JOY_Y_PIN A1    // Elevación
@@ -21,6 +23,9 @@
 // Botón de Modo
 #define JOY_BTN_PIN 11
 
+// SoftwareSerial para logs de depuración hacia ESP32
+SoftwareSerial debugSerial(13, 12); // RX = 13 (sin usar), TX = 12 (conectado a ESP32 G16)
+
 // Parámetros de velocidad máxima configurable
 #define MAX_VEL_CARRO 255
 #define MAX_VEL_ELEVACION 255
@@ -39,9 +44,22 @@ unsigned long lastBtnPressTime = 0;
 const unsigned long DEBOUNCE_MS = 50;
 bool lastBtnState = HIGH;
 
+// Variables del gemelo digital de telemetría (Simuladas en Arduino)
+float posGiro = 0.0;
+float posCarro = 110.0;
+float posGancho = 0.0;
+
+unsigned long lastUpdate = 0;
+unsigned long lastTelemetryTime = 0;
+const unsigned long TELEMETRY_INTERVAL_MS = 100; // Telemetría cada 100ms
+
 void setup() {
-  // Inicialización de comunicación serial
+  // Inicialización de comunicación serial de hardware (USB-Laptop)
   Serial.begin(9600);
+
+  // Inicialización de SoftwareSerial para depuración (hacia ESP32)
+  debugSerial.begin(9600);
+  debugSerial.println("SYSTEM: Crane controller initialized. Logs redirected here.");
 
   // Configuración de pines de motores DC
   pinMode(AIN1_PIN, OUTPUT);
@@ -136,6 +154,8 @@ void processUART() {
     // Si recibimos un comando de movimiento válido, actualizamos el tiempo del último comando
     if (cmd == 'F' || cmd == 'B' || cmd == 'U' || cmd == 'D' || cmd == 'L' || cmd == 'R' || cmd == 'S') {
       lastWebCmdTime = millis();
+      debugSerial.print("UART: Movement command received: ");
+      debugSerial.println(cmd);
     }
     
     switch (cmd) {
@@ -149,17 +169,20 @@ void processUART() {
         webCarro = 0; 
         webElevacion = 0; 
         webGiro = 0; 
+        debugSerial.println("ACTION: Emergency Stop / Standby.");
         break;
       case 'W':
         if (!modoControlWeb) {
           modoControlWeb = true;
           Serial.write('W');
+          debugSerial.println("MODE: Changed to WEB (Remote control active).");
         }
         break;
       case 'M':
         if (modoControlWeb) {
           modoControlWeb = false;
           Serial.write('M');
+          debugSerial.println("MODE: Changed to MANUAL (Joystick control active).");
         }
         break;
     }
@@ -167,9 +190,76 @@ void processUART() {
 
   // Timeout de seguridad web: solo se aplica si está en modo Web
   if (modoControlWeb && (millis() - lastWebCmdTime > WEB_TIMEOUT_MS)) {
-    webCarro = 0;
-    webElevacion = 0;
-    webGiro = 0;
+    if (webCarro != 0 || webElevacion != 0 || webGiro != 0) {
+      webCarro = 0;
+      webElevacion = 0;
+      webGiro = 0;
+      debugSerial.println("SAFETY: USB link command timeout. Resetting motor intent to 0.");
+    }
+  }
+}
+
+void updateSimulatedPositions() {
+  unsigned long now = millis();
+  if (lastUpdate == 0) {
+    lastUpdate = now;
+    return;
+  }
+  float dt = (now - lastUpdate) / 1000.0; // en segundos
+  lastUpdate = now;
+
+  // Determinar la velocidad activa según el modo
+  int currCarro = 0;
+  int currElevacion = 0;
+  int currGiro = 0;
+
+  if (modoControlWeb) {
+    currCarro = webCarro;
+    currElevacion = webElevacion;
+    currGiro = webGiro;
+  } else {
+    currCarro = readJoystick(JOY_X_PIN, MAX_VEL_CARRO);
+    currElevacion = readJoystick(JOY_Y_PIN, MAX_VEL_ELEVACION);
+    currGiro = readJoystick(JOY_Z_PIN, MAX_VEL_GIRO);
+  }
+
+  // Integrar Giro (velocidad de cambio: ~60 grados/seg a velocidad máx)
+  if (currGiro != 0) {
+    float rateGiro = 60.0 * (currGiro / (float)MAX_VEL_GIRO);
+    posGiro += rateGiro * dt;
+    // Normalizar ángulo entre -180 y 180 para que no crezca indefinidamente
+    if (posGiro > 180.0) posGiro -= 360.0;
+    if (posGiro < -180.0) posGiro += 360.0;
+  }
+
+  // Integrar Carro (velocidad de cambio: ~33.3 unidades/seg a velocidad máx)
+  if (currCarro != 0) {
+    float rateCarro = 33.3 * (currCarro / (float)MAX_VEL_CARRO);
+    posCarro += rateCarro * dt;
+    posCarro = constrain(posCarro, 65.0, 150.0);
+  }
+
+  // Integrar Gancho/Elevación
+  // Elevación positiva es subir (U), lo que reduce la profundidad (posGancho)
+  // Elevación negativa es bajar (D), lo que aumenta la profundidad (posGancho)
+  if (currElevacion != 0) {
+    float rateElev = 33.3 * (currElevacion / (float)MAX_VEL_ELEVACION);
+    posGancho -= rateElev * dt;
+    posGancho = constrain(posGancho, 0.0, 65.0);
+  }
+}
+
+void sendTelemetry() {
+  unsigned long now = millis();
+  if (now - lastTelemetryTime >= TELEMETRY_INTERVAL_MS) {
+    lastTelemetryTime = now;
+    Serial.print("{\"giro\":");
+    Serial.print(posGiro, 1);
+    Serial.print(",\"carro\":");
+    Serial.print(posCarro, 1);
+    Serial.print(",\"gancho\":");
+    Serial.print(posGancho, 1);
+    Serial.println("}");
   }
 }
 
@@ -177,14 +267,23 @@ void loop() {
   // Procesar comandos de la interfaz web / serial
   processUART();
 
+  // Actualizar posiciones integradas
+  updateSimulatedPositions();
+
+  // Enviar telemetría JSON por hardware serial (USB)
+  sendTelemetry();
+
   // Leer estado del botón de joystick con antirrebote (Debounce)
   bool btnState = digitalRead(JOY_BTN_PIN);
   if (btnState != lastBtnState) {
     if (millis() - lastBtnPressTime > DEBOUNCE_MS) {
       if (btnState == LOW) { // Botón pulsado (flanco de bajada)
         modoControlWeb = !modoControlWeb;
-        // Enviar nuevo estado por UART
+        // Enviar nuevo estado por UART de hardware (USB)
         Serial.write(modoControlWeb ? 'W' : 'M');
+        // Enviar log explicativo
+        debugSerial.print("BUTTON: Mode toggled physically. New mode: ");
+        debugSerial.println(modoControlWeb ? "WEB" : "MANUAL");
         
         // Parar motores al cambiar de modo para evitar movimientos bruscos
         webCarro = 0; webElevacion = 0; webGiro = 0;

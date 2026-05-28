@@ -288,6 +288,37 @@
             height: 14px;
             border-radius: 3px;
         }
+
+        /* BARRA DE NAVEGACIÓN */
+        .nav-bar {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 10px;
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        .nav-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            padding: 6px 12px;
+            border-radius: 6px;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--accent-yellow);
+            background: rgba(250, 204, 21, 0.08);
+            text-shadow: 0 0 8px rgba(250, 204, 21, 0.4);
+        }
+
         /* LIGHT MODE OVERRIDES */
         body.light-mode {
             --bg-dark: #f8fafc;
@@ -645,6 +676,11 @@
 <body>
     <button id="theme-toggle">Tema Claro</button>
 
+    <div class="nav-bar">
+        <a href="index.html" class="nav-link">Control</a>
+        <a href="Schema.html" class="nav-link active">Esquema</a>
+    </div>
+
     <h1>Esquema de Conexiones Electrónicas</h1>
     <div class="subtitle">
         Visualización de la arquitectura de control dual. Pasa el cursor por encima de las líneas para resaltar y ver detalles del conexionado del sistema.
@@ -717,6 +753,8 @@
                         <text x="330" y="260" class="pin-label" text-anchor="end">D9 (CIN1)</text>
                         <text x="330" y="275" class="pin-label" text-anchor="end">D10 (CIN2)</text>
                         <text x="330" y="290" class="pin-label" text-anchor="end">D6 (PWMC)</text>
+                        <text x="330" y="315" class="pin-label" text-anchor="end">D12 (LOG TX)</text>
+                        <text x="330" y="330" class="pin-label" text-anchor="end">D13 (LOG RX)</text>
                     </g>
 
                     <!-- JOYSTICK 1 (CARRO / GIRO) -->
@@ -801,11 +839,8 @@
                     </g>
 
                     <!-- CABLES / CONEXIONES -->
-                    <!-- UART TX ESP32 -> RX NANO -->
-                    <path d="M 150 145 L 180 145 L 180 130 L 200 130 L 200 145 L 220 145" class="connection-wire wire-uart" data-wire="UART TX2 (ESP32) -> RX0 (Arduino)" data-info="Conecta el pin TX del ESP32 (GPIO 17) con el pin RX del Arduino Nano para el envío de comandos web."/>
-                    
-                    <!-- UART RX ESP32 <- TX NANO -->
-                    <path d="M 220 165 L 200 165 L 200 175 L 180 175 L 180 165 L 150 165" class="connection-wire wire-uart" data-wire="UART RX2 (ESP32) <- TX0 (Arduino)" data-info="Conecta el pin TX del Arduino Nano con el pin RX del ESP32 (GPIO 16) para sincronizar bidireccionalmente el estado del modo."/>
+                    <!-- SoftwareSerial LOG: Arduino D12 (TX) -> ESP32 RX2 (G16) -->
+                    <path d="M 330 315 L 390 315 L 390 280 L 180 280 L 180 165 L 150 165" class="connection-wire wire-uart" data-wire="SoftwareSerial D12 (TX) -> ESP32 RX2 (G16)" data-info="Conecta el pin D12 (SoftwareSerial TX) del Arduino Nano al pin RX2 (GPIO 16) del ESP32 para el envío de logs de depuración."/>
 
                     <!-- Alimentacion Lógica Compartida (Red VCC) -->
                     <path d="M 150 195 L 220 195" class="connection-wire wire-vcc-logic" data-wire="VCC Lógica (5V)" data-info="Línea de 5V lógica común para compartir energía entre el ESP32 y el Arduino Nano."/>
@@ -915,17 +950,17 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td>ESP32</td>
-                            <td>GPIO 17 (TX2)</td>
-                            <td>Arduino RX (D0)</td>
-                            <td>Transmisión comandos Web</td>
+                            <td>Arduino Nano</td>
+                            <td>D12 (LOG TX)</td>
+                            <td>ESP32 RX2 (GPIO 16)</td>
+                            <td>Transmisión de logs (SoftwareSerial)</td>
                             <td><span class="tag tag-uart">UART</span></td>
                         </tr>
                         <tr>
                             <td>ESP32</td>
-                            <td>GPIO 16 (RX2)</td>
-                            <td>Arduino TX (D1)</td>
-                            <td>Recepción estado de Modo</td>
+                            <td>GPIO 17 (TX2)</td>
+                            <td>-</td>
+                            <td>Sin usar / Desconectado</td>
                             <td><span class="tag tag-uart">UART</span></td>
                         </tr>
                         <tr>
@@ -1209,9 +1244,9 @@
                     { label: 'Tensión Entrada', value: '5V (USB / VIN)' }
                 ],
                 connections: [
-                    'Pin TX2 (GPIO 17) conectado al pin RX (D0) del Arduino Nano para el envío de comandos.',
-                    'Pin RX2 (GPIO 16) conectado al pin TX (D1) del Arduino Nano para la retroalimentación de modo.',
-                    'Líneas VIN (5V) y GND conectadas a la barra de alimentación lógica compartida con el Arduino.'
+                    'Pin RX2 (GPIO 16) conectado al pin D12 (SoftwareSerial TX) del Arduino Nano para recibir logs de depuración.',
+                    'Pin TX2 (GPIO 17) se encuentra desconectado / sin usar en esta arquitectura.',
+                    'Líneas VIN (5V) y GND conectadas a la barra de alimentación lógica compartida con el Arduino Nano.'
                 ],
                 symbol: `<svg width="70" height="50" viewBox="0 0 70 50">
                     <rect x="15" y="10" width="40" height="30" rx="3" fill="none" stroke="var(--accent-yellow)" stroke-width="2.5" />
@@ -1244,7 +1279,8 @@
                     'Pines D2, D3, D4, D5, D7, D8 conectados al TB6612FNG (1) para dirección y velocidad de Carro y Elevación.',
                     'Pines D9, D6, D10 conectados al TB6612FNG (2) para velocidad y dirección del Motor Giro.',
                     'Pin D11 configurado con PULLUP interna para leer el pulsador de cambio de modo de control.',
-                    'Puerto de comunicación por Hardware UART (D0 RX, D1 TX) cruzado hacia el ESP32 Gateway.'
+                    'Pin D12 (SoftwareSerial TX) conectado al RX2 (GPIO 16) de ESP32 para transmisión de logs de depuración.',
+                    'Puerto USB de hardware serial (D0 RX, D1 TX) conectado al ordenador para control y telemetría JSON.'
                 ],
                 symbol: `<svg width="80" height="50" viewBox="0 0 80 50">
                     <rect x="10" y="8" width="60" height="34" rx="4" fill="none" stroke="var(--accent-blue)" stroke-width="2.5" />

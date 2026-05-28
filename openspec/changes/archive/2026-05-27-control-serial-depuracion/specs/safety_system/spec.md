@@ -1,8 +1,5 @@
-# Safety Watchdog and Emergency Stop System
+## MODIFIED Requirements
 
-## Purpose
-This specification defines the safety systems of the grúa torre scale model, including the connection watchdog timer and emergency stop behaviors.
-## Requirements
 ### Requirement: Arduino UART Connection Watchdog
 The Arduino Nano control firmware MUST run a safety timer to detect loss of control command link over USB Web Serial when in Web mode.
 - Watchdog Timeout: 500 milliseconds.
@@ -12,12 +9,3 @@ The Arduino Nano control firmware MUST run a safety timer to detect loss of cont
 #### Scenario: Loss of Communication Link
 - **WHEN** the time since the last valid Web Serial command exceeds 500 ms and `modoControlWeb` is True
 - **THEN** the local web intent registers for carriage, hoisting, and rotation must be set to 0.
-
-### Requirement: Emergency Stop Handling
-The system SHALL treat the command character `S` as an immediate stop signal for all three DC motor actuators.
-- Action: Disable H-Bridge driver outputs (PWMA=0, PWMB=0, PWMC=0).
-
-#### Scenario: Emergency Stop Command Received
-- **WHEN** an ASCII `S` is received via UART or the emergency button is pressed
-- **THEN** the motor driver PWM pins must go to zero.
-

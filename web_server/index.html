@@ -78,6 +78,32 @@
             border-top: 2px solid #000;
         }
 
+        /* BARRA DE NAVEGACION */
+        .nav-bar {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 12px;
+            border-bottom: 1px solid #22354b;
+            padding-bottom: 10px;
+        }
+        .nav-link {
+            color: #64748b;
+            text-decoration: none;
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            padding: 4px 10px;
+            border-radius: 4px;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: var(--crane-yellow);
+            background: rgba(250, 204, 21, 0.1);
+            text-shadow: 0 0 8px rgba(250, 204, 21, 0.4);
+        }
+
         h2 {
             margin: 0 0 12px 0;
             font-size: 1.05rem;
@@ -350,6 +376,64 @@
         input:checked + .slider:before {
             transform: translateX(22px);
         }
+
+        /* WEB SERIAL API INTERFACE */
+        .serial-control {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid #22354b;
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-bottom: 12px;
+        }
+        .btn-serial {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid #334e6e;
+            color: #ffffff;
+            padding: 6px 12px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .btn-serial:hover {
+            border-color: var(--crane-yellow);
+            background: rgba(250, 204, 21, 0.15);
+            color: var(--crane-yellow);
+            box-shadow: 0 0 8px rgba(250, 204, 21, 0.3);
+        }
+        .btn-serial.connected {
+            border-color: #4ade80;
+            color: #4ade80;
+            background: rgba(74, 222, 128, 0.1);
+        }
+        .serial-status {
+            font-size: 0.65rem;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+        .serial-status.disconnected {
+            color: #94a3b8;
+            background: rgba(148, 163, 184, 0.1);
+        }
+        .serial-status.connecting {
+            color: #facc15;
+            background: rgba(250, 204, 21, 0.1);
+        }
+        .serial-status.connected {
+            color: #4ade80;
+            background: rgba(74, 222, 128, 0.15);
+            text-shadow: 0 0 5px rgba(74, 222, 128, 0.5);
+        }
+
         /* THEME TOGGLE BUTTON & LIGHT MODE OVERRIDES */
         #theme-toggle {
             position: absolute;
@@ -374,7 +458,7 @@
         body.light-mode { background-color: #f1f5f9; color: #0f172a; }
         body.light-mode .grue-console { background-color: #ffffff; border-color: #cbd5e1; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
         body.light-mode h2 { color: #b45309; text-shadow: none; }
-        body.light-mode .joystick-card, body.light-mode .mode-selector { background: #f8fafc; border-color: #cbd5e1; box-shadow: inset 0 2px 6px rgba(0,0,0,0.05); }
+        body.light-mode .joystick-card, body.light-mode .mode-selector, body.light-mode .serial-control { background: #f8fafc; border-color: #cbd5e1; box-shadow: inset 0 2px 6px rgba(0,0,0,0.05); }
         body.light-mode .joystick-label, body.light-mode .telemetry-item, body.light-mode .guide { color: #475569; }
         body.light-mode .joystick-base-circular { background: radial-gradient(circle, #e2e8f0 0%, #cbd5e1 100%); border-color: #94a3b8; }
         body.light-mode .joystick-base-linear { background: linear-gradient(90deg, #cbd5e1 0%, #e2e8f0 50%, #cbd5e1 100%); border-color: #94a3b8; }
@@ -382,6 +466,12 @@
         body.light-mode .mode-label { color: #94a3b8; }
         body.light-mode .mode-label.active { color: #b45309; text-shadow: none; }
         body.light-mode canvas { background: #f8fafc; border: 1px solid #e2e8f0; }
+        body.light-mode .nav-bar { border-bottom-color: #cbd5e1; }
+        body.light-mode .nav-link { color: #64748b; }
+        body.light-mode .nav-link:hover, body.light-mode .nav-link.active { color: #b45309; background: rgba(180, 83, 9, 0.08); text-shadow: none; }
+        body.light-mode .btn-serial { background: linear-gradient(135deg, #e2e8f0 0%, #f1f5f9 100%); border-color: #cbd5e1; color: #334155; }
+        body.light-mode .btn-serial:hover { border-color: #b45309; color: #b45309; background: rgba(180, 83, 9, 0.08); }
+        body.light-mode .serial-status.disconnected { color: #64748b; background: rgba(100, 116, 139, 0.1); }
         
         body.light-mode .monitor-dashboard { background: #ffffff; border-color: #cbd5e1; box-shadow: none; }
         body.light-mode .monitor-dashboard::after { display: none; }
@@ -395,7 +485,18 @@
         <div class="hazard-lines"></div>
         <button id="theme-toggle">Tema Claro</button>
 
+        <div class="nav-bar">
+            <a href="index.html" class="nav-link active">Control</a>
+            <a href="Schema.html" class="nav-link">Esquema</a>
+        </div>
+
         <h2>SISTEMA DE CONTROL DE GRÚA INDUSTRIAL</h2>
+
+        <!-- Web Serial API Connection Bar -->
+        <div class="serial-control">
+            <button id="btnConnectSerial" class="btn-serial">🔌 Conectar USB</button>
+            <span id="serialStatus" class="serial-status disconnected">Desconectado</span>
+        </div>
 
         <div class="mode-selector">
             <span class="mode-label" id="lblManual">MANUAL</span>
@@ -503,12 +604,17 @@
 
         function addData(chart, val) { chart.data.datasets[0].data.push(val); chart.data.datasets[0].data.shift(); chart.update('none'); }
 
-        // LOGICA ORIGINAL
+        // LOGICA GLOBAL
         let anguloGiro = 0;
         let posicionCarro = 110; 
         let posicionGancho = 0;  
         let loopAnimacion = null;
         let comandoActivo = "S";
+
+        // Web Serial Variables
+        let serialPort = null;
+        let serialReader = null;
+        let isSerialConnected = false;
 
         const plumaGiro = document.getElementById('plumaGiro');
         const carroPlanta = document.getElementById('carroPlanta');
@@ -539,7 +645,7 @@
                 document.addEventListener('touchend', soltar);
                 document.addEventListener('mousemove', mover);
                 document.addEventListener('mouseup', soltar);
-                if (!loopAnimacion) loopAnimacion = setInterval(refrescarMonitor, 30);
+                if (!isSerialConnected && !loopAnimacion) loopAnimacion = setInterval(refrescarMonitor, 30);
             };
             const mover = (e) => {
                 if (e.cancelable) e.preventDefault();
@@ -564,7 +670,7 @@
                 document.addEventListener('touchend', soltar);
                 document.addEventListener('mousemove', mover);
                 document.addEventListener('mouseup', soltar);
-                if (!loopAnimacion) loopAnimacion = setInterval(refrescarMonitor, 30);
+                if (!isSerialConnected && !loopAnimacion) loopAnimacion = setInterval(refrescarMonitor, 30);
             };
             const mover = (e) => {
                 if (e.cancelable) e.preventDefault();
@@ -580,9 +686,26 @@
         }
 
         function removerEventos(mover, soltar) { document.removeEventListener('touchmove', mover); document.removeEventListener('touchend', soltar); document.removeEventListener('mousemove', mover); document.removeEventListener('mouseup', soltar); }
-        function finalizarComando() { despacharComando("S"); clearInterval(loopAnimacion); loopAnimacion = null; }
-        function despacharComando(cmd) { comandoActivo = cmd; fetch('/api/command?cmd=' + cmd).catch(() => {}); if (navigator.vibrate) navigator.vibrate(12); }
+        function finalizarComando() { 
+            despacharComando("S"); 
+            if (!isSerialConnected && loopAnimacion) {
+                clearInterval(loopAnimacion); 
+                loopAnimacion = null; 
+            }
+        }
 
+        // CONTROL DE ENVIO DE COMANDOS DUAL
+        function despacharComando(cmd) { 
+            comandoActivo = cmd; 
+            if (isSerialConnected) {
+                enviarComandoSerial(cmd);
+            } else {
+                fetch('/api/command?cmd=' + cmd).catch(() => {}); 
+            }
+            if (navigator.vibrate) navigator.vibrate(12); 
+        }
+
+        // Simulación local de telemetría (Fallback cuando no se usa Web Serial)
         function refrescarMonitor() {
             if (comandoActivo === 'L') anguloGiro -= 1.8;
             if (comandoActivo === 'R') anguloGiro += 1.8;
@@ -591,7 +714,10 @@
             if (comandoActivo === 'U' && posicionGancho > 0) posicionGancho -= 1.0;
             if (comandoActivo === 'D' && posicionGancho < 65) posicionGancho += 1.0;
 
-            // Lógica de telemetría inyectada
+            // Ajustar rango de giro de simulación local
+            if (anguloGiro > 180) anguloGiro -= 360;
+            if (anguloGiro < -180) anguloGiro += 360;
+
             addData(gGiro, anguloGiro);
             addData(gCarro, posicionCarro);
             addData(gGancho, posicionGancho);
@@ -607,8 +733,10 @@
             despacharComando('S');
             document.getElementById('joyIzquierdo').style.transform = 'translate(0px, 0px)';
             document.getElementById('joyGancho').style.transform = 'translateY(0px)';
-            clearInterval(loopAnimacion);
-            loopAnimacion = null;
+            if (!isSerialConnected && loopAnimacion) {
+                clearInterval(loopAnimacion);
+                loopAnimacion = null;
+            }
         });
 
         // ==============================================
@@ -619,13 +747,20 @@
         const lblWeb = document.getElementById('lblWeb');
 
         modeSwitch.addEventListener('change', () => {
-            const mode = modeSwitch.checked ? 'web' : 'manual';
-            fetch('/api/mode?set=' + mode)
-                .then(res => res.json())
-                .then(data => {
-                    actualizarUIModo(data.mode === 'web');
-                })
-                .catch(() => {});
+            const isWeb = modeSwitch.checked;
+            const modeChar = isWeb ? 'W' : 'M';
+            if (isSerialConnected) {
+                enviarComandoSerial(modeChar);
+                actualizarUIModo(isWeb);
+            } else {
+                const mode = isWeb ? 'web' : 'manual';
+                fetch('/api/mode?set=' + mode)
+                    .then(res => res.json())
+                    .then(data => {
+                        actualizarUIModo(data.mode === 'web');
+                    })
+                    .catch(() => {});
+            }
         });
 
         function actualizarUIModo(isWeb) {
@@ -642,8 +777,9 @@
         // Inicializar UI en manual
         actualizarUIModo(false);
 
-        // Polling de sincronización de estado (1 Hz)
+        // Polling de sincronización de estado HTTP (Solo si no está conectado por serie)
         setInterval(() => {
+            if (isSerialConnected) return;
             fetch('/api/status')
                 .then(res => res.json())
                 .then(data => {
@@ -653,6 +789,206 @@
                 })
                 .catch(() => {});
         }, 1000);
+
+        // ==============================================
+        // LÓGICA DE WEB SERIAL API
+        // ==============================================
+        const btnConnectSerial = document.getElementById('btnConnectSerial');
+        const serialStatus = document.getElementById('serialStatus');
+
+        async function connectSerial() {
+            if (isSerialConnected) {
+                try {
+                    if (serialReader) {
+                        await serialReader.cancel();
+                    }
+                } catch (e) {
+                    console.error("Error al cancelar reader:", e);
+                }
+                setSerialState(false);
+                return;
+            }
+
+            if (!("serial" in navigator)) {
+                alert("La Web Serial API no está soportada en este navegador. Utiliza Google Chrome, Microsoft Edge u Opera.");
+                return;
+            }
+
+            serialStatus.textContent = "Buscando...";
+            serialStatus.className = "serial-status connecting";
+
+            try {
+                serialPort = await navigator.serial.requestPort();
+                await serialPort.open({ baudRate: 9600 });
+                setSerialState(true);
+                leerPuertoSerie();
+                
+                // Sincronizar el modo de control actual de la interfaz hacia el Arduino
+                enviarComandoSerial(modeSwitch.checked ? 'W' : 'M');
+            } catch (e) {
+                console.error("Error al abrir puerto serie:", e);
+                serialStatus.textContent = "Error";
+                serialStatus.className = "serial-status disconnected";
+                setSerialState(false);
+            }
+        }
+
+        function setSerialState(connected) {
+            isSerialConnected = connected;
+            if (connected) {
+                btnConnectSerial.textContent = "🔌 Desconectar USB";
+                btnConnectSerial.classList.add('connected');
+                serialStatus.textContent = "Conectado";
+                serialStatus.className = "serial-status connected";
+            } else {
+                btnConnectSerial.textContent = "🔌 Conectar USB";
+                btnConnectSerial.classList.remove('connected');
+                serialStatus.textContent = "Desconectado";
+                serialStatus.className = "serial-status disconnected";
+                serialPort = null;
+                serialReader = null;
+            }
+        }
+
+        async function enviarComandoSerial(char) {
+            if (isSerialConnected && serialPort && serialPort.writable) {
+                try {
+                    const writer = serialPort.writable.getWriter();
+                    const data = new TextEncoder().encode(char);
+                    await writer.write(data);
+                    writer.releaseLock();
+                } catch (e) {
+                    console.error("Error al escribir en puerto serie:", e);
+                }
+            }
+        }
+
+        async function leerPuertoSerie() {
+            let lineBuffer = "";
+            
+            try {
+                while (isSerialConnected && serialPort.readable) {
+                    const textDecoder = new TextDecoderStream();
+                    const readableStreamClosed = serialPort.readable.pipeTo(textDecoder.writable);
+                    const reader = textDecoder.readable.getReader();
+                    serialReader = reader;
+
+                    try {
+                        while (true) {
+                            const { value, done } = await reader.read();
+                            if (done) {
+                                break;
+                            }
+                            lineBuffer += value;
+                            let pos;
+                            while ((pos = lineBuffer.indexOf('\n')) >= 0) {
+                                const line = lineBuffer.substring(0, pos).trim();
+                                lineBuffer = lineBuffer.substring(pos + 1);
+                                if (line) {
+                                    procesarTramaTelemetria(line);
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.error("Error interno de lectura de flujo:", e);
+                    } finally {
+                        reader.releaseLock();
+                        try {
+                            await readableStreamClosed;
+                        } catch (e) {}
+                    }
+                }
+            } catch (e) {
+                console.error("Error fatal en el puerto serie:", e);
+            } finally {
+                setSerialState(false);
+            }
+        }
+
+        function procesarTramaTelemetria(linea) {
+            try {
+                // Control de sincronización directa de caracteres de modo
+                if (linea === 'W') {
+                    actualizarUIModo(true);
+                    return;
+                } else if (linea === 'M') {
+                    actualizarUIModo(false);
+                    return;
+                }
+
+                // Procesamiento de JSON de telemetría
+                const data = JSON.parse(linea);
+                if (data && typeof data.giro !== 'undefined' && typeof data.carro !== 'undefined' && typeof data.gancho !== 'undefined') {
+                    anguloGiro = parseFloat(data.giro);
+                    posicionCarro = parseFloat(data.carro);
+                    posicionGancho = parseFloat(data.gancho);
+
+                    addData(gGiro, anguloGiro);
+                    addData(gCarro, posicionCarro);
+                    addData(gGancho, posicionGancho);
+
+                    plumaGiro.setAttribute('transform', `rotate(${anguloGiro} 85 85)`);
+                    carroPlanta.setAttribute('x', posicionCarro);
+                    carroComponentePerfil.setAttribute('transform', `translate(${posicionCarro}, 0)`);
+                    cablePerfil.setAttribute('y2', 34 + 41 + posicionGancho);
+                    ganchoPerfil.setAttribute('transform', `translate(0, ${posicionGancho})`);
+                }
+            } catch (e) {
+                console.log("[UART DEBUG] ", linea);
+            }
+        }
+
+        // ==============================================
+        // LÓGICA DE TECLADO (SHORTCUTS)
+        // ==============================================
+        let keysPressed = {};
+
+        window.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+            let cmd = null;
+            const key = e.code;
+
+            if (keysPressed[key]) return; // Evitar disparar múltiples veces si se mantiene presionada
+
+            if (key === 'KeyW' || key === 'ArrowUp') cmd = 'F';
+            else if (key === 'KeyS' || key === 'ArrowDown') cmd = 'B';
+            else if (key === 'KeyA' || key === 'ArrowLeft') cmd = 'L';
+            else if (key === 'KeyD' || key === 'ArrowRight') cmd = 'R';
+            else if (key === 'KeyQ') cmd = 'U';
+            else if (key === 'KeyE') cmd = 'D';
+            else if (key === 'Space' || key === 'Escape') cmd = 'S';
+
+            if (cmd) {
+                keysPressed[key] = true;
+                despacharComando(cmd);
+                
+                // Si estamos en simulación local sin USB, iniciamos temporizador de animación
+                if (!isSerialConnected && !loopAnimacion && cmd !== 'S') {
+                    loopAnimacion = setInterval(refrescarMonitor, 30);
+                }
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            const key = e.code;
+            if (keysPressed[key]) {
+                delete keysPressed[key];
+                
+                // Si ya no quedan teclas de dirección presionadas, mandar Stop
+                let directionsPressed = Object.keys(keysPressed).some(k => 
+                    ['KeyW', 'ArrowUp', 'KeyS', 'ArrowDown', 'KeyA', 'ArrowLeft', 'KeyD', 'ArrowRight', 'KeyQ', 'KeyE'].includes(k)
+                );
+                
+                if (!directionsPressed) {
+                    despacharComando('S');
+                    if (!isSerialConnected && loopAnimacion) {
+                        clearInterval(loopAnimacion);
+                        loopAnimacion = null;
+                    }
+                }
+            }
+        });
 
         // LÓGICA DEL TEMA
         const themeToggle = document.getElementById('theme-toggle');
