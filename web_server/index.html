@@ -616,6 +616,16 @@
         let serialReader = null;
         let isSerialConnected = false;
 
+        // HTTP Fallback Variables
+        // Si se ejecuta localmente (Live Server, dirección loopback o archivo local), desactivamos preventivamente
+        // el fallback de la API HTTP ya que no existirá un servidor en este origen.
+        let httpFallbackActive = !(
+            window.location.hostname === '127.0.0.1' || 
+            window.location.hostname === 'localhost' || 
+            window.location.protocol === 'file:'
+        );
+        let apiStatusInterval = null;
+
         const plumaGiro = document.getElementById('plumaGiro');
         const carroPlanta = document.getElementById('carroPlanta');
         const carroComponentePerfil = document.getElementById('carroComponentePerfil');
@@ -699,7 +709,7 @@
             comandoActivo = cmd; 
             if (isSerialConnected) {
                 enviarComandoSerial(cmd);
-            } else {
+            } else if (httpFallbackActive) {
                 fetch('/api/command?cmd=' + cmd).catch(() => {}); 
             }
             if (navigator.vibrate) navigator.vibrate(12); 
@@ -754,12 +764,23 @@
                 actualizarUIModo(isWeb);
             } else {
                 const mode = isWeb ? 'web' : 'manual';
-                fetch('/api/mode?set=' + mode)
-                    .then(res => res.json())
-                    .then(data => {
-                        actualizarUIModo(data.mode === 'web');
-                    })
-                    .catch(() => {});
+                if (httpFallbackActive) {
+                    fetch('/api/mode?set=' + mode)
+                        .then(res => {
+                            if (!res.ok) throw new Error("HTTP Error");
+                            return res.json();
+                        })
+                        .then(data => {
+                            actualizarUIModo(data.mode === 'web');
+                        })
+                        .catch(() => {
+                            // Fallback local en caso de error de red o de API inexistente
+                            actualizarUIModo(isWeb);
+                        });
+                } else {
+                    // Actualizar localmente de forma inmediata si la API HTTP no está disponible
+                    actualizarUIModo(isWeb);
+                }
             }
         });
 
@@ -778,26 +799,51 @@
         actualizarUIModo(false);
 
         // Polling de sincronización de estado HTTP (Solo si no está conectado por serie)
-        setInterval(() => {
-            if (isSerialConnected) return;
-            fetch('/api/status')
-                .then(res => res.json())
-                .then(data => {
-                    if (data.mode) {
-                        actualizarUIModo(data.mode === 'web');
-                    }
-                })
-                .catch(() => {});
-        }, 1000);
+        function iniciarPollingStatus() {
+            if (apiStatusInterval) clearInterval(apiStatusInterval);
+            if (!httpFallbackActive) {
+                console.log("[HTTP API] Ejecución local detectada (Live Server/Archivo). Modo de simulación/Web Serial activo; API HTTP desactivada preventivamente.");
+                return;
+            }
+            apiStatusInterval = setInterval(() => {
+                if (isSerialConnected || !httpFallbackActive) return;
+                fetch('/api/status')
+                    .then(res => {
+                        if (!res.ok) {
+                            // Si el servidor responde con 404 u otro error, desactivar polling
+                            console.warn("[HTTP API] El endpoint '/api/status' no está disponible. Desactivando polling.");
+                            httpFallbackActive = false;
+                            clearInterval(apiStatusInterval);
+                            return null;
+                        }
+                        return res.json();
+                    })
+                    .then(data => {
+                        if (data && data.mode) {
+                            actualizarUIModo(data.mode === 'web');
+                        }
+                    })
+                    .catch(() => {
+                        // Desactivar si no hay conexión al servidor (Live Server, etc.) para evitar spam en consola
+                        console.warn("[HTTP API] Conexión fallida con '/api/status'. Desactivando polling para evitar spam en consola.");
+                        httpFallbackActive = false;
+                        clearInterval(apiStatusInterval);
+                    });
+            }, 1000);
+        }
+
+        iniciarPollingStatus();
 
         // ==============================================
         // LÓGICA DE WEB SERIAL API
         // ==============================================
         const btnConnectSerial = document.getElementById('btnConnectSerial');
         const serialStatus = document.getElementById('serialStatus');
+        btnConnectSerial.addEventListener('click', connectSerial);
 
         async function connectSerial() {
             if (isSerialConnected) {
+                isSerialConnected = false; // Detiene el bucle de lectura
                 try {
                     if (serialReader) {
                         await serialReader.cancel();
@@ -805,7 +851,6 @@
                 } catch (e) {
                     console.error("Error al cancelar reader:", e);
                 }
-                setSerialState(false);
                 return;
             }
 
@@ -819,7 +864,12 @@
 
             try {
                 serialPort = await navigator.serial.requestPort();
-                await serialPort.open({ baudRate: 9600 });
+                
+                // Si el puerto ya está abierto (por ejemplo, streams activos), evitar llamar a open() de nuevo
+                if (!serialPort.readable) {
+                    await serialPort.open({ baudRate: 9600 });
+                }
+                
                 setSerialState(true);
                 leerPuertoSerie();
                 
@@ -827,6 +877,10 @@
                 enviarComandoSerial(modeSwitch.checked ? 'W' : 'M');
             } catch (e) {
                 console.error("Error al abrir puerto serie:", e);
+                // Si el error indica que ya está abierto en otra pestaña o proceso
+                if (e.name === "InvalidStateError") {
+                    alert("El puerto ya está abierto o siendo utilizado por otra pestaña/aplicación.");
+                }
                 serialStatus.textContent = "Error";
                 serialStatus.className = "serial-status disconnected";
                 setSerialState(false);
@@ -862,6 +916,13 @@
                 }
             }
         }
+
+        // Transmisión periódica (Heartbeat) del comando activo para evitar el timeout de seguridad de 500ms del Arduino
+        setInterval(() => {
+            if (isSerialConnected && comandoActivo !== 'S') {
+                enviarComandoSerial(comandoActivo);
+            }
+        }, 150);
 
         async function leerPuertoSerie() {
             let lineBuffer = "";
@@ -901,6 +962,14 @@
             } catch (e) {
                 console.error("Error fatal en el puerto serie:", e);
             } finally {
+                // Liberar recursos y cerrar el puerto físico de forma segura
+                if (serialPort) {
+                    try {
+                        await serialPort.close();
+                    } catch (e) {
+                        console.error("Error al cerrar puerto físicamente:", e);
+                    }
+                }
                 setSerialState(false);
             }
         }
@@ -908,13 +977,17 @@
         function procesarTramaTelemetria(linea) {
             try {
                 // Control de sincronización directa de caracteres de modo
-                if (linea === 'W') {
+                // Soporta tanto caracteres individuales como caracteres prefijados al JSON debido a que se transmiten sin salto de línea
+                if (linea.startsWith('W')) {
                     actualizarUIModo(true);
-                    return;
-                } else if (linea === 'M') {
+                    linea = linea.substring(1).trim();
+                } else if (linea.startsWith('M')) {
                     actualizarUIModo(false);
-                    return;
+                    linea = linea.substring(1).trim();
                 }
+
+                // Si era un comando individual de modo y quedó vacío, terminar temprano
+                if (!linea) return;
 
                 // Procesamiento de JSON de telemetría
                 const data = JSON.parse(linea);
