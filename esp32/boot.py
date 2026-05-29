@@ -45,9 +45,9 @@ def conectar_wifi_interactivo():
     time.sleep(0.2)
     wlan.active(True)
     
-    print("\n--- CONFIGURACIÓN DE RED MANUAL ---")
-    ssid = input("Ingresa el nombre del WiFi (SSID): ").strip()
-    password = input("Ingresa la contraseña del WiFi: ").strip()
+    print("\n--- CONFIGURACIÓN DE RED AUTOMÁTICA ---")
+    ssid = "Mkl bilder"
+    password = ""  # TODO: add password
     
     print(f"\nConectando a la red: {ssid}...")
     wlan.connect(ssid, password)

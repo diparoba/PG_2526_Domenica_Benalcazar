@@ -1,12 +1,17 @@
+# ==========================================================
+# ARCHIVO: main.py
+# DESCRIPCIÓN: Telemetría - Muestra datos del Arduino Nano
+#              recibidos por UART en una interfaz web mínima.
+#              La conexión WiFi se maneja en boot.py.
+# ==========================================================
 import uasyncio as asyncio
-from machine import UART, Pin
+from machine import UART
 
-# Configuración de Hardware
-# UART1 con TX=17 y RX=16 a 9600 bps para recibir logs del Arduino (RX=16)
+# UART1: RX=16 recibe datos de telemetría del Arduino Nano
 uart = UART(1, baudrate=9600, tx=17, rx=16)
 
 # Buffer circular de 50 líneas
-logs = ["LOG MONITOR INICIADO"]
+logs = ["TELEMETRIA INICIADA"]
 
 def add_log(line):
     global logs
@@ -18,54 +23,51 @@ def add_log(line):
 
 # Tarea asíncrona para leer líneas de UART
 async def leer_uart_task():
-    print("Iniciando tarea de lectura UART1...")
+    print("Escuchando telemetria del Arduino Nano por UART1...")
     buffer = b""
     while True:
         if uart.any() > 0:
             try:
-                # Leer bytes disponibles
                 chunk = uart.read(uart.any())
                 if chunk:
                     buffer += chunk
-                    # Procesar líneas completas
                     while b"\n" in buffer:
                         linea_bytes, buffer = buffer.split(b"\n", 1)
                         linea_str = linea_bytes.decode('utf-8', 'ignore').strip()
                         if linea_str:
                             add_log(linea_str)
-                            print(f"[UART LOG] {linea_str}")
+                            print(f"[TELEMETRIA] {linea_str}")
             except Exception as e:
                 print("Error en lectura UART:", e)
         await asyncio.sleep_ms(50)
 
-# Servidor Web asíncrono
+# Servidor Web - Interfaz mínima de telemetría
 async def handle_client(reader, writer):
     try:
         request_line = await reader.readline()
         if not request_line:
             return
-        
+
         request_str = request_line.decode('utf-8').strip()
-        # Consumir el resto de las cabeceras HTTP
+        # Consumir cabeceras HTTP
         while True:
             line = await reader.readline()
             if not line or line == b'\r\n':
                 break
-                
+
         if request_str.startswith("GET / HTTP"):
-            # Generar página HTML retro de terminal
             html = """<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="refresh" content="2">
-    <title>Terminal de Depuración Inalámbrica</title>
+    <title>Telemetria - Grua Torre</title>
     <style>
         body {
-            background-color: #000000;
+            background-color: #000;
             color: #4ade80;
-            font-family: 'Courier New', Courier, monospace;
+            font-family: 'Courier New', monospace;
             padding: 20px;
             margin: 0;
             font-size: 14px;
@@ -113,19 +115,18 @@ async def handle_client(reader, writer):
 <body>
     <div class="terminal">
         <div class="header">
-            <span>📟 MONITOREO DE GRÚA TORRE - ESP32</span>
-            <span class="blink">● EN VIVO</span>
+            <span>TELEMETRIA - GRUA TORRE</span>
+            <span class="blink">EN VIVO</span>
         </div>
         <div class="log-list">
 """
             for log in logs:
                 html += f'            <div class="log-item">{log}</div>\n'
-                
+
             html += """        </div>
     </div>
 </body>
 </html>"""
-            
             response = 'HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n' + html
             writer.write(response.encode('utf-8'))
             await writer.drain()
@@ -133,7 +134,7 @@ async def handle_client(reader, writer):
             response = 'HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n'
             writer.write(response.encode('utf-8'))
             await writer.drain()
-            
+
     except Exception as e:
         print("Error en handle_client:", e)
     finally:
@@ -141,20 +142,18 @@ async def handle_client(reader, writer):
         await writer.wait_closed()
 
 async def main():
-    print("Iniciando monitor de depuracion inalambrica...")
-    # Levantar el servidor web asíncrono
+    print("Iniciando servidor de telemetria...")
     server = await asyncio.start_server(handle_client, '0.0.0.0', 80)
-    print("Servidor web escuchando en puerto 80.")
-    
-    # Levantar la tarea de lectura UART
+    print("Servidor web de telemetria en puerto 80.")
+
+    # Iniciar lectura UART del Arduino Nano
     asyncio.create_task(leer_uart_task())
-    
-    # Bucle infinito para mantener el loop de asyncio corriendo
+
     while True:
         await asyncio.sleep(1)
 
-# Arrancar el bucle asíncrono
+# Arrancar
 try:
     asyncio.run(main())
 except KeyboardInterrupt:
-    print("Servidor web apagado.")
+    print("Servidor de telemetria apagado.")
