@@ -27,9 +27,9 @@
 SoftwareSerial debugSerial(13, 12); // RX = 13 (sin usar), TX = 12 (conectado a ESP32 G16)
 
 // Parámetros de velocidad máxima configurable
-#define MAX_VEL_CARRO 255
-#define MAX_VEL_ELEVACION 255
-#define MAX_VEL_GIRO 255
+#define MAX_VEL_CARRO 200
+#define MAX_VEL_ELEVACION 200
+#define MAX_VEL_GIRO 200
 
 // Variables de intención web
 int webCarro = 0;
