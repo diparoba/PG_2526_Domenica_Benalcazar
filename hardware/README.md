@@ -26,3 +26,5 @@ La siguiente tabla resume el progreso y la validación de las tareas críticas d
 1. **Red:** El sistema genera el AP `Grua_Torre_Politecnica`.
 2. **Interfaz:** Acceder a `192.168.4.1` desde un navegador móvil.
 3. **Prioridad:** Los comandos vía web anulan los joysticks físicos hasta que el estado web retorne a 'S'.
+
+Repositorio hecho pore: Doménica Benalcazar
